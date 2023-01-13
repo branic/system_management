@@ -1,0 +1,44 @@
+---
+- name: Check if OC CLI binary installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.local/bin/oc"
+  register: oc_cli_installed
+
+- name: Check OC CLI versions (Block)
+  when: oc_cli_installed.stat.exists
+  block:
+    - name: Retrieve latest OC CLI version
+      ansible.builtin.uri:
+        url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
+        return_content: true
+      register: oc_cli_version
+
+    - name: Determine latest OC CLI version
+      ansible.builtin.set_fact:
+        latest_oc_cli_ver: "{{ oc_cli_version['content'] | regex_replace('(?s).*^Release Metadata:\\s+Version:\\s+(?P<version>[0-9.]+).*$', '\\g<version>', multiline=True) }}"
+
+    - name: Retrieve installed OC CLI version
+      ansible.builtin.command:
+        cmd: oc version --request-timeout=1s
+      register: oc_ver_installed_result
+      failed_when: oc_ver_installed_result.rc > 1
+      changed_when: false
+
+    - name: Determine installed ROSA CLI version
+      ansible.builtin.set_fact:
+        installed_oc_cli_ver: "{{ oc_ver_installed_result.stdout | regex_replace('(?s).*^Client Version:\\s+(?P<version>[0-9.]+).*$', '\\g<version>', multiline=True) }}"
+
+- name: Update OC CLI executable
+  when: (not oc_cli_installed.stat.exists) or (installed_oc_cli_ver != latest_oc_cli_ver)
+  ansible.builtin.unarchive:
+    src: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz
+    dest: "{{ ansible_user_dir }}/.local/bin"
+    remote_src: true
+    include:
+      - "oc"
+      - "kubectl"
+
+- name: Add oc command-line completion to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.bashrc"
+    line: source <(oc completion bash)

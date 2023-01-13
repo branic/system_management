@@ -1,0 +1,19 @@
+---
+# tasks file for install_clis
+
+- name: Gather minimal facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+
+- name: Install AWS CLI
+  ansible.builtin.include_tasks:
+    file: aws_cli.yml
+
+- name: Install OC CLI
+  ansible.builtin.include_tasks:
+    file: oc_cli.yml
+
+- name: Install ROSA CLI
+  ansible.builtin.include_tasks:
+    file: rosa_cli.yml

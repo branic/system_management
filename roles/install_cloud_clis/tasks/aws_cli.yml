@@ -1,0 +1,54 @@
+---
+- name: Check if AWS CLI binary installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.local/bin/aws"
+  register: aws_cli_installed
+
+- name: Check AWS CLI versions (Block)
+  when: aws_cli_installed.stat.exists
+  block:
+    - name: Retrieve AWS CLI versions
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/aws/aws-cli/tags
+      register: aws_cli_versions
+
+    - name: Determine latest AWS CLI version
+      ansible.builtin.set_fact:
+        latest_aws_cli_ver: "{{ aws_cli_versions.json[0]['name'] }}"
+
+    - name: Retrieve installed AWS CLI version
+      ansible.builtin.command:
+        cmd: aws --version
+      register: aws_ver_installed_result
+      changed_when: false
+
+    - name: Determine installed AWS CLI version
+      ansible.builtin.set_fact:
+        installed_aws_cli_ver: "{{ aws_ver_installed_result.stdout | regex_replace('^aws-cli/([0-9.]+).*$', '\\1') }}"
+
+- name: Update AWS CLI (Block)
+  when: (not aws_cli_installed.stat.exists) or (installed_aws_cli_ver != latest_aws_cli_ver)
+  block:
+    - name: Create temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+      register: aws_temp_dir
+
+    # See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+    - name: Update the AWS CLI executable
+      ansible.builtin.unarchive:
+        src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: "{{ aws_temp_dir['path'] }}"
+        remote_src: true
+
+    - name: Update AWS CLI
+      ansible.builtin.command:
+        cmd: ./aws/install -i {{ ansible_user_dir }}/.local/aws-cli -b {{ ansible_user_dir }}/.local/bin --update
+        chdir: "{{ aws_temp_dir['path'] }}"
+      changed_when: true
+
+    - name: Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ aws_temp_dir['path'] }}"
+        state: absent
+      when: aws_temp_dir['path'] is defined
