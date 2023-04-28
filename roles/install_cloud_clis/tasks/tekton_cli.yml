@@ -1,0 +1,59 @@
+---
+- name: Retrieve Tekton CLI versions
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/tektoncd/cli/releases
+  register: tekton_cli_versions
+
+- name: Determine latest Tekton CLI GA release version details
+  ansible.builtin.set_fact:
+    latest_tekton_cli_ver_details: "{{ tekton_cli_versions.json | selectattr('prerelease', 'equalto', false) | first }}"
+
+- name: Determine latest Tekton CLI version
+  ansible.builtin.set_fact:
+    latest_tekton_cli_ver: "{{ latest_tekton_cli_ver_details['tag_name'] | regex_replace('^v(?P<version>[0-9.]+)$', '\\g<version>') }}"
+
+- name: Determine latest Tekton CLI download URL
+  ansible.builtin.set_fact:
+    latest_tekton_cli_url: "{{ latest_tekton_cli_ver_details['assets'] | selectattr('name', 'equalto', 'tkn_' + latest_tekton_cli_ver + '_Linux_x86_64.tar.gz') | map(attribute='browser_download_url') | first }}"
+
+- name: Check if Tekton CLI binary installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.local/bin/tkn"
+  register: tekton_cli_installed
+
+- name: Check Tekton CLI versions (Block)
+  when: tekton_cli_installed.stat.exists
+  block:
+    - name: Retrieve installed Tekton CLI version
+      ansible.builtin.command:
+        cmd: tkn version --component client
+      register: tekton_ver_installed_result
+      changed_when: false
+
+    - name: Determine installed Tekton CLI version
+      ansible.builtin.set_fact:
+        installed_tekton_cli_ver: "{{ tekton_ver_installed_result.stdout }}"
+
+- name: Display Tekton CLI version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ installed_tekton_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ latest_tekton_cli_ver }}",
+        "URL for latest version: {{ latest_tekton_cli_url }}"
+      ]
+    verbosity: 1
+
+- name: Update Tekton CLI executable
+  when: (not tekton_cli_installed.stat.exists) or (installed_tekton_cli_ver != latest_tekton_cli_ver)
+  ansible.builtin.unarchive:
+    src: "{{ latest_tekton_cli_url }}"
+    dest: "{{ ansible_user_dir }}/.local/bin"
+    remote_src: true
+    include:
+      - "tkn"
+
+- name: Add rosa command-line completion to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.bashrc"
+    line: source <(tkn completion bash)

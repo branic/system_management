@@ -35,7 +35,7 @@
       register: aws_temp_dir
 
     # See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-    - name: Update the AWS CLI executable
+    - name: Unzip the AWS CLI installer
       ansible.builtin.unarchive:
         src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
         dest: "{{ aws_temp_dir['path'] }}"
