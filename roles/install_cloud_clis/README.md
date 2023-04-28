@@ -5,6 +5,7 @@ This role will install and update the following Cloud CLIs:
 - AWS
 - OpenShift
 - ROSA
+- Tekton
 
 The CLIs are installed into `$HOME/.local/bin` directory.
 
