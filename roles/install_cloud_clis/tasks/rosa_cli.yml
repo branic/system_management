@@ -40,7 +40,7 @@
       ]
     verbosity: 1
 
-- name: Update ROSA CLI executable
+- name: Update ROSA CLI executable (Block)
   when: (not rosa_cli_installed.stat.exists) or (update_rosa_cli)
   block:
     - name: Update ROSA CLI executable
@@ -62,7 +62,6 @@
       ansible.builtin.set_fact:
         __cloud_cli_update_results: >
           {{ __cloud_cli_update_results + ["Installed ROSA CLI"] }}
-
 
 - name: Add rosa command-line completion to .bashrc
   ansible.builtin.lineinfile:

@@ -1,0 +1,78 @@
+---
+- name: Retrieve kube-linter CLI versions
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/stackrox/kube-linter/releases
+  register: kube_linter_cli_versions
+
+- name: Determine latest kube-linter GA release version details
+  ansible.builtin.set_fact:
+    latest_kube_linter_cli_ver_details: "{{ kube_linter_cli_versions.json | selectattr('prerelease', 'equalto', false) | first }}"
+
+- name: Determine latest kube-linter version
+  ansible.builtin.set_fact:
+    latest_kube_linter_cli_ver: "{{ latest_kube_linter_cli_ver_details['tag_name'] | regex_replace('^v(?P<version>[0-9.]+)$', '\\g<version>') }}"
+
+- name: Determine latest kube-linter download URL
+  ansible.builtin.set_fact:
+    latest_kube_linter_cli_url: "{{ latest_kube_linter_cli_ver_details['assets'] | selectattr('name', 'equalto', 'kube-linter-linux.tar.gz') | map(attribute='browser_download_url') | first }}"
+
+- name: Check if kube-linter binary installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.local/bin/kube-linter"
+  register: kube_linter_cli_installed
+
+- name: Check kube-linter versions (Block)
+  when: kube_linter_cli_installed.stat.exists
+  block:
+    - name: Retrieve installed kube-linter version
+      ansible.builtin.command:
+        cmd: kube-linter version
+      register: kube_linter_ver_installed_result
+      changed_when: false
+
+    - name: Determine installed kube-linter version
+      ansible.builtin.set_fact:
+        installed_kube_linter_cli_ver: "{{ kube_linter_ver_installed_result.stdout | regex_replace('(?s)^v(?P<version>\\d{1,2}\\.\\d{1,2}\\.\\d{1,3}).*$', '\\g<version>') }}"
+
+    - name: Handle 0.6.2 and 0.6.3 versions being the same
+      when: installed_kube_linter_cli_ver == '0.6.2' and latest_kube_linter_cli_ver == '0.6.3'
+      ansible.builtin.set_fact:
+        installed_kube_linter_cli_ver: "0.6.3"
+
+- name: Display kube-linter version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ installed_kube_linter_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ latest_kube_linter_cli_ver }}",
+        "URL for latest version: {{ latest_kube_linter_cli_url }}"
+      ]
+    verbosity: 1
+
+- name: Update kube-linter executable (Block)
+  when: (not kube_linter_cli_installed.stat.exists) or (installed_kube_linter_cli_ver != latest_kube_linter_cli_ver)
+  block:
+    - name: Update kube-linter executable
+      ansible.builtin.unarchive:
+        src: "{{ latest_kube_linter_cli_url }}"
+        dest: "{{ ansible_user_dir }}/.local/bin"
+        remote_src: true
+        include:
+          - "kube-linter"
+
+    - name: Add updated message
+      when: (installed_kube_linter_cli_verion is defined) and (installed_kube_linter_cli_ver != latest_kube_linter_cli_ver)
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Updated kube-linter from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+
+    - name: Add installed message
+      when: not kube_linter_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Installed kube-linter"] }}
+
+- name: Add kube-linter command-line completion to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.bashrc"
+    line: source <(kube-linter completion bash)

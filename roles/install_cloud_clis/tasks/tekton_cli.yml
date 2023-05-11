@@ -44,7 +44,7 @@
       ]
     verbosity: 1
 
-- name: Update Tekton CLI executable
+- name: Update Tekton CLI executable (Block)
   when: (not tekton_cli_installed.stat.exists) or (installed_tekton_cli_ver != latest_tekton_cli_ver)
   block:
     - name: Update Tekton CLI executable
@@ -67,7 +67,7 @@
         __cloud_cli_update_results: >
           {{ __cloud_cli_update_results + ["Installed Tekton CLI"] }}
 
-- name: Add rosa command-line completion to .bashrc
+- name: Add Tekton command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
     line: source <(tkn completion bash)
