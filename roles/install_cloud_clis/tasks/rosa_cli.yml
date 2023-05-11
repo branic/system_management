@@ -67,4 +67,4 @@
 - name: Add rosa command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
-    line: source <(rosa completion)
+    line: source <(rosa completion bash)
