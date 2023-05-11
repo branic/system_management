@@ -7,15 +7,6 @@
 - name: Check ROSA CLI versions (Block)
   when: rosa_cli_installed.stat.exists
   block:
-    - name: Retrieve ROSA CLI versions
-      ansible.builtin.uri:
-        url: https://api.github.com/repos/openshift/rosa/releases/latest
-      register: rosa_cli_versions
-
-    - name: Determine latest ROSA CLI version
-      ansible.builtin.set_fact:
-        latest_rosa_cli_ver: "{{ rosa_cli_versions.json['tag_name'] | regex_replace('^v(?P<version>[0-9.]+)$', '\\g<version>') }}"
-
     - name: Retrieve installed ROSA CLI version
       ansible.builtin.command:
         cmd: rosa version
@@ -24,16 +15,54 @@
 
     - name: Determine installed ROSA CLI version
       ansible.builtin.set_fact:
-        installed_rosa_cli_ver: "{{ rosa_ver_installed_result.stdout | regex_replace('(?s).*^(?P<version>[0-9.]+).*$', '\\g<version>', multiline=True) }}"
+        installed_rosa_cli_ver: "{{ rosa_ver_installed_result.stdout | regex_replace('(?s)^(?P<version>\\d{1,2}\\.\\d{1,2}\\.\\d{1,3}).*$', '\\g<version>', multiline=True) }}"
+
+    - name: Determine if there is a newer version
+      ansible.builtin.set_fact:
+        update_rosa_cli: "{{ rosa_ver_installed_result.stdout | regex_search('newer release version', multiline=True) is none | ternary(False, True) }}"
+
+    - name: Determine newest version number
+      when: update_rosa_cli
+      ansible.builtin.set_fact:
+        latest_rosa_cli_ver: "{{ rosa_ver_installed_result.stdout | regex_replace('(?s)^.*version.*(?P<version>\\d{1,2}\\.\\d{1,2}\\.\\d{1,3}).*$', '\\g<version>', multiline=True) }}"
+
+    - name: Ensure the latest version number is set
+      when: not update_rosa_cli
+      ansible.builtin.set_fact:
+        latest_rosa_cli_ver: "{{ installed_rosa_cli_ver }}"
+
+- name: Display ROSA CLI version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ installed_rosa_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ latest_rosa_cli_ver | default('UNKNOWN') }}",
+      ]
+    verbosity: 1
 
 - name: Update ROSA CLI executable
-  when: (not rosa_cli_installed.stat.exists) or (installed_rosa_cli_ver != latest_rosa_cli_ver)
-  ansible.builtin.unarchive:
-    src: https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
-    dest: "{{ ansible_user_dir }}/.local/bin"
-    remote_src: true
-    include:
-      - "rosa"
+  when: (not rosa_cli_installed.stat.exists) or (update_rosa_cli)
+  block:
+    - name: Update ROSA CLI executable
+      ansible.builtin.unarchive:
+        src: https://mirror.openshift.com/pub/openshift-v4/clients/rosa/latest/rosa-linux.tar.gz
+        dest: "{{ ansible_user_dir }}/.local/bin"
+        remote_src: true
+        include:
+          - "rosa"
+
+    - name: Add updated message
+      when: update_rosa_cli | default(false)
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Updated ROSA CLI from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+
+    - name: Add installed message
+      when: not rosa_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Installed ROSA CLI"] }}
+
 
 - name: Add rosa command-line completion to .bashrc
   ansible.builtin.lineinfile:

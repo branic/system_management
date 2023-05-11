@@ -36,15 +36,29 @@
       ]
     verbosity: 1
 
-- name: Update OC CLI executable
+- name: Update OC CLI executable (Block)
   when: (not oc_cli_installed.stat.exists) or (installed_oc_cli_ver != latest_oc_cli_ver)
-  ansible.builtin.unarchive:
-    src: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz
-    dest: "{{ ansible_user_dir }}/.local/bin"
-    remote_src: true
-    include:
-      - "oc"
-      - "kubectl"
+  block:
+    - name: Update OC CLI executable
+      ansible.builtin.unarchive:
+        src: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz
+        dest: "{{ ansible_user_dir }}/.local/bin"
+        remote_src: true
+        include:
+          - "oc"
+          - "kubectl"
+
+    - name: Add updated message
+      when: (installed_oc_cli_ver is defined) and (installed_oc_cli_ver != latest_oc_cli_ver)
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Updated OC CLI from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+
+    - name: Add installed message
+      when: not oc_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Installed OC CLI"] }}
 
 - name: Add oc command-line completion to .bashrc
   ansible.builtin.lineinfile:

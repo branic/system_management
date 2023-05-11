@@ -46,12 +46,26 @@
 
 - name: Update Tekton CLI executable
   when: (not tekton_cli_installed.stat.exists) or (installed_tekton_cli_ver != latest_tekton_cli_ver)
-  ansible.builtin.unarchive:
-    src: "{{ latest_tekton_cli_url }}"
-    dest: "{{ ansible_user_dir }}/.local/bin"
-    remote_src: true
-    include:
-      - "tkn"
+  block:
+    - name: Update Tekton CLI executable
+      ansible.builtin.unarchive:
+        src: "{{ latest_tekton_cli_url }}"
+        dest: "{{ ansible_user_dir }}/.local/bin"
+        remote_src: true
+        include:
+          - "tkn"
+
+    - name: Add updated message
+      when: (installed_tekton_cli_verion is defined) and (installed_tekton_cli_ver != latest_tekton_cli_ver)
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Updated Tekton CLI from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+
+    - name: Add installed message
+      when: not tekton_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Installed Tekton CLI"] }}
 
 - name: Add rosa command-line completion to .bashrc
   ansible.builtin.lineinfile:

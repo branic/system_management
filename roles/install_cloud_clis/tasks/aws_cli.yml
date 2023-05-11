@@ -26,6 +26,15 @@
       ansible.builtin.set_fact:
         installed_aws_cli_ver: "{{ aws_ver_installed_result.stdout | regex_replace('^aws-cli/([0-9.]+).*$', '\\1') }}"
 
+- name: Display AWS CLI version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ installed_aws_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ latest_aws_cli_ver }}",
+      ]
+    verbosity: 1
+
 - name: Update AWS CLI (Block)
   when: (not aws_cli_installed.stat.exists) or (installed_aws_cli_ver != latest_aws_cli_ver)
   block:
@@ -52,3 +61,20 @@
         path: "{{ aws_temp_dir['path'] }}"
         state: absent
       when: aws_temp_dir['path'] is defined
+
+    - name: Add updated message
+      when: (installed_aws_cli_ver is defined) and (installed_aws_cli_ver != latest_aws_cli_ver)
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Updated AWS CLI from " + installed_aws_cli_ver + " to " + latest_aws_cli_ver] }}
+
+    - name: Add installed message
+      when: not aws_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        __cloud_cli_update_results: >
+          {{ __cloud_cli_update_results + ["Installed AWS CLI"] }}
+
+- name: Add aws command-line completion to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_user_dir }}/.bashrc"
+    line: complete -C '{{ ansible_user_dir }}/.local/bin/aws_completer' aws
