@@ -61,10 +61,10 @@
           - "kube-linter"
 
     - name: Add updated message
-      when: (installed_kube_linter_cli_verion is defined) and (installed_kube_linter_cli_ver != latest_kube_linter_cli_ver)
+      when: (installed_kube_linter_cli_ver is defined) and (installed_kube_linter_cli_ver != latest_kube_linter_cli_ver)
       ansible.builtin.set_fact:
         __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated kube-linter from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+          {{ __cloud_cli_update_results + ["Updated kube-linter from " + installed_kube_linter_cli_ver + " to " + latest_kube_linter_cli_ver] }}
 
     - name: Add installed message
       when: not kube_linter_cli_installed.stat.exists

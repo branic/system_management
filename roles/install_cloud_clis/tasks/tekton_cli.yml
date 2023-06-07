@@ -56,10 +56,10 @@
           - "tkn"
 
     - name: Add updated message
-      when: (installed_tekton_cli_verion is defined) and (installed_tekton_cli_ver != latest_tekton_cli_ver)
+      when: (installed_tekton_cli_ver is defined) and (installed_tekton_cli_ver != latest_tekton_cli_ver)
       ansible.builtin.set_fact:
         __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated Tekton CLI from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+          {{ __cloud_cli_update_results + ["Updated Tekton CLI from " + installed_tekton_cli_ver + " to " + latest_tekton_cli_ver] }}
 
     - name: Add installed message
       when: not tekton_cli_installed.stat.exists

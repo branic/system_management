@@ -52,7 +52,7 @@
       when: (installed_oc_cli_ver is defined) and (installed_oc_cli_ver != latest_oc_cli_ver)
       ansible.builtin.set_fact:
         __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated OC CLI from " + installed_rosa_cli_ver + " to " + latest_rosa_cli_ver] }}
+          {{ __cloud_cli_update_results + ["Updated OC CLI from " + installed_oc_cli_ver + " to " + latest_oc_cli_ver] }}
 
     - name: Add installed message
       when: not oc_cli_installed.stat.exists
