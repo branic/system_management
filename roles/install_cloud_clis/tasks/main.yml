@@ -26,6 +26,10 @@
   ansible.builtin.include_tasks:
     file: kube-linter.yml
 
+- name: Install kustomize
+  ansible.builtin.include_tasks:
+    file: kustomize.yml
+
 - name: Display upgrade results
   ansible.builtin.debug:
     msg: "{{ (__cloud_cli_update_results | length > 0) | ternary(__cloud_cli_update_results, 'All CLIs are already at the latest version') }}"
