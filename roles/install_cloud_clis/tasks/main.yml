@@ -34,6 +34,10 @@
   ansible.builtin.include_tasks:
     file: stern.yml
 
+- name: Install helm
+  ansible.builtin.include_tasks:
+    file: helm.yml
+
 - name: Display upgrade results
   ansible.builtin.debug:
     msg: "{{ (__cloud_cli_update_results | length > 0) | ternary(__cloud_cli_update_results, 'All CLIs are already at the latest version') }}"
