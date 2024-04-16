@@ -6,6 +6,10 @@ This role will install and update the following Cloud CLIs:
 - OpenShift
 - ROSA
 - Tekton
+- Helm
+- Kube-linter
+- Kustomize
+- Stern
 
 The CLIs are installed into `$HOME/.local/bin` directory.
 
