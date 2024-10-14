@@ -6,38 +6,48 @@
     gather_subset:
       - "!all"
 
-- name: Install AWS CLI
-  ansible.builtin.include_tasks:
-    file: aws_cli.yml
+- name: Update CLIs (Block)
+  block:
+    - name: Install AWS CLI
+      ansible.builtin.include_tasks:
+        file: aws_cli.yml
 
-- name: Install OC CLI
-  ansible.builtin.include_tasks:
-    file: oc_cli.yml
+    - name: Install OC CLI
+      ansible.builtin.include_tasks:
+        file: oc_cli.yml
 
-- name: Install ROSA CLI
-  ansible.builtin.include_tasks:
-    file: rosa_cli.yml
+    - name: Install ROSA CLI
+      ansible.builtin.include_tasks:
+        file: rosa_cli.yml
 
-- name: Install Tekton CLI
-  ansible.builtin.include_tasks:
-    file: tekton_cli.yml
+    - name: Install Tekton CLI
+      ansible.builtin.include_tasks:
+        file: tekton_cli.yml
 
-- name: Install kube-linter
-  ansible.builtin.include_tasks:
-    file: kube-linter.yml
+    - name: Install kube-linter
+      ansible.builtin.include_tasks:
+        file: kube-linter.yml
 
-- name: Install kustomize
-  ansible.builtin.include_tasks:
-    file: kustomize.yml
+    - name: Install kustomize
+      ansible.builtin.include_tasks:
+        file: kustomize.yml
 
-- name: Install stern
-  ansible.builtin.include_tasks:
-    file: stern.yml
+    - name: Install stern
+      ansible.builtin.include_tasks:
+        file: stern.yml
 
-- name: Install helm
-  ansible.builtin.include_tasks:
-    file: helm.yml
+    - name: Install helm
+      ansible.builtin.include_tasks:
+        file: helm.yml
 
-- name: Display upgrade results
-  ansible.builtin.debug:
-    msg: "{{ (__cloud_cli_update_results | length > 0) | ternary(__cloud_cli_update_results, 'All CLIs are already at the latest version') }}"
+  # rescue:
+  #   - name: Error encountered
+  #     ansible.builtin.debug:
+  #       msg: |
+  #         "An error was encountered in the '{{ ansible_failed_task.name }}'"
+  #         "{{ ansible_failed_result }}"
+
+  always:
+    - name: Display upgrade results
+      ansible.builtin.debug:
+        msg: "{{ (__cloud_cli_update_results | length > 0) | ternary(__cloud_cli_update_results, 'All CLIs are already at the latest version') }}"
