@@ -164,3 +164,8 @@ cython_debug/
 hello_world*
 **/*hello_world
 **/run
+
+# Ignore files from ansible-navigator files
+**/*artifact*.json
+ansible-navigator.yml
+inventory.ini

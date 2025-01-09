@@ -1,0 +1,9 @@
+---
+- name: Install and Update Cloud CLI tools
+  hosts: "{{ target | default('all') }}"
+  gather_facts: false
+
+  tasks:
+    - name: Include install_cloud_clis role
+      ansible.builtin.include_role:
+        name: install_cloud_clis
