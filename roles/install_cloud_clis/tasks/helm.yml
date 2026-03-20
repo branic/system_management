@@ -40,7 +40,7 @@
   block:
     - name: Retrieve installed helm version
       ansible.builtin.command:
-        cmd: !unsafe helm version --template="{{ .Version }}"
+        cmd: helm version --template='{% raw %}{{ .Version }}{% endraw %}'
       register: helm_installed_cli_version_result
       changed_when: false
 
