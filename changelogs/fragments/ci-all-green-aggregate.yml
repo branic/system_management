@@ -1,0 +1,5 @@
+---
+trivial:
+  - >-
+    CI - tighten all_green job so it skips when the workflow run is cancelled,
+    require every needed job to succeed, and fix the aggregate result check
