@@ -30,7 +30,9 @@ jobs:
       collection_pre_install: >-
         git+https://github.com/ansible-collections/ansible.utils.git
   all_green:
-    if: ${{ always() }}
+    # Run after every needed job finishes (success or failure), but skip when the
+    # workflow run was cancelled (e.g. superseded by concurrency) so we never "pass" on cancelled deps.
+    if: ${{ always() && !cancelled() }}
     needs:
       - changelog
       - build-import
@@ -40,12 +42,37 @@ jobs:
       - ansible-lint
     runs-on: ubuntu-latest
     steps:
-      - run: >-
-          python -c "assert 'failure' not in
-          set([
-          '${{ needs.changelog.result }}',
-          '${{ needs.sanity.result }}',
-          '${{ needs.unit-galaxy.result }}'
-          '${{ needs.ansible-lint.result }}'
-          '${{ needs.unit-source.result }}'
-          ])"
+      - name: Verify all required jobs succeeded
+        env:
+          R_CHANGELOG: ${{ needs['changelog'].result }}
+          R_BUILD_IMPORT: ${{ needs['build-import'].result }}
+          R_ANSIBLE_LINT: ${{ needs['ansible-lint'].result }}
+          R_SANITY: ${{ needs['sanity'].result }}
+          R_UNIT_GALAXY: ${{ needs['unit-galaxy'].result }}
+          R_UNIT_SOURCE: ${{ needs['unit-source'].result }}
+        run: |
+          import os
+
+          results = {
+              "changelog": os.environ["R_CHANGELOG"],
+              "build-import": os.environ["R_BUILD_IMPORT"],
+              "ansible-lint": os.environ["R_ANSIBLE_LINT"],
+              "sanity": os.environ["R_SANITY"],
+              "unit-galaxy": os.environ["R_UNIT_GALAXY"],
+              "unit-source": os.environ["R_UNIT_SOURCE"],
+          }
+          must_succeed = (
+              "build-import",
+              "ansible-lint",
+              "sanity",
+              "unit-galaxy",
+              "unit-source",
+          )
+          for name in must_succeed:
+              r = results[name]
+              assert r == "success", f"{name}: expected success, got {r!r}"
+          cl = results["changelog"]
+          assert cl in ("success", "skipped"), (
+              f"changelog: expected success or skipped, got {cl!r}"
+          )
+        shell: python
