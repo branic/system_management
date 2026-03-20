@@ -74,6 +74,41 @@
         __cloud_cli_update_results: >
           {{ __cloud_cli_update_results + ["Installed AWS CLI"] }}
 
+- name: Find old major versions to cleanup
+  ansible.builtin.find:
+    paths:
+      - "{{ ansible_user_dir }}/.local/aws-cli"
+    file_type: directory
+    recurse: false
+  register: __aws_cli_major_version_dirs_result
+
+- name: Create major version directory list
+  ansible.builtin.set_fact:
+    __aws_cli_major_version_dirs: "{{ __aws_cli_major_version_dirs | default([]) + [__aws_cli_mvd['path']] }}"
+  loop: "{{ __aws_cli_major_version_dirs_result['files'] }}"
+  loop_control:
+    loop_var: __aws_cli_mvd
+    label: "Adding {{ __aws_cli_mvd['path'] }}"
+
+- name: Find versions to remove
+  ansible.builtin.find:
+    paths: "{{ __aws_cli_major_version_dirs }}"
+    file_type: directory
+    recurse: false
+    excludes:
+      - "{{ latest_aws_cli_ver }}"
+      - "{{ installed_aws_cli_ver }}"
+  register: __aws_cli_vers_to_del_result
+
+- name: Remove old versions that were found
+  ansible.builtin.file:
+    path: "{{ __aws_cli_ver_to_del['path'] }}"
+    state: absent
+  loop: "{{ __aws_cli_vers_to_del_result['files'] }}"
+  loop_control:
+    loop_var: __aws_cli_ver_to_del
+    label: "Removing {{ __aws_cli_ver_to_del['path'] }}"
+
 - name: Add aws command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
