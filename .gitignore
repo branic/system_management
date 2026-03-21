@@ -168,4 +168,7 @@ hello_world*
 # Ignore files from ansible-navigator files
 **/*artifact*.json
 ansible-navigator.yml
+
+# Ignore ansible config files
+ansible.cfg
 inventory.ini
