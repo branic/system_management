@@ -1,89 +1,89 @@
 ---
-- name: Retrieve kustomize CLI versions
+- name: kustomize | Retrieve kustomize CLI versions
   ansible.builtin.uri:
     url: https://api.github.com/repos/kubernetes-sigs/kustomize/releases
-  register: kustomize_cli_versions
+  register: __install_cloud_clis_kustomize_cli_versions
 
-- name: Determine latest kustomize GA release version details
+- name: kustomize | Determine latest kustomize GA release version details
   ansible.builtin.set_fact:
-    latest_kustomize_cli_ver_details: >-
-      {{ kustomize_cli_versions.json |
+    __install_cloud_clis_latest_kustomize_cli_ver_details: >-
+      {{ __install_cloud_clis_kustomize_cli_versions.json |
          selectattr('prerelease', 'equalto', false) |
          selectattr('name', 'contains', 'kustomize') |
          first
       }}
 
-- name: Determine latest kustomize version
+- name: kustomize | Determine latest kustomize version
   ansible.builtin.set_fact:
-    latest_kustomize_cli_ver: >-
-      {{ latest_kustomize_cli_ver_details['tag_name'] |
+    __install_cloud_clis_latest_kustomize_cli_ver: >-
+      {{ __install_cloud_clis_latest_kustomize_cli_ver_details['tag_name'] |
          regex_replace('^(.+)v(?P<version>[0-9.]+)$', '\g<version>')
       }}
 
-- name: Determine latest kustomize download URL
+- name: kustomize | Determine latest kustomize download URL
   ansible.builtin.set_fact:
-    latest_kustomize_cli_url: >-
-      {{ latest_kustomize_cli_ver_details['assets'] |
+    __install_cloud_clis_latest_kustomize_cli_url: >-
+      {{ __install_cloud_clis_latest_kustomize_cli_ver_details['assets'] |
          selectattr('name', 'contains', 'linux_amd64') |
          map(attribute='browser_download_url') |
          first
       }}
 
-- name: Check if kustomize binary installed
+- name: kustomize | Check if kustomize binary installed
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.local/bin/kustomize"
-  register: kustomize_cli_installed
+    path: "{{ install_cloud_clis_bin_dir }}/kustomize"
+  register: __install_cloud_clis_kustomize_cli_installed
 
-- name: Check kustomize versions (Block)
-  when: kustomize_cli_installed.stat.exists
+- name: kustomize | Check kustomize versions (Block)
+  when: __install_cloud_clis_kustomize_cli_installed.stat.exists
   block:
-    - name: Retrieve installed kustomize version
+    - name: kustomize | Retrieve installed kustomize version
       ansible.builtin.command:
         cmd: kustomize version
-      register: kustomize_ver_installed_result
+      register: __install_cloud_clis_kustomize_ver_installed_result
       changed_when: false
 
-    - name: Determine installed kustomize version
+    - name: kustomize | Determine installed kustomize version
       ansible.builtin.set_fact:
-        installed_kustomize_cli_ver: >-
-          {{ kustomize_ver_installed_result.stdout |
+        __install_cloud_clis_installed_kustomize_cli_ver: >-
+          {{ __install_cloud_clis_kustomize_ver_installed_result.stdout |
              regex_replace('(?s)^v(?P<version>[0-9.]+)$', '\g<version>')
           }}
 
-- name: Display kustomize version info
+- name: kustomize | Display kustomize version info
   ansible.builtin.debug:
     msg: |
       [
-        "Installed Version: {{ installed_kustomize_cli_ver | default('NOT INSTALLED') }}",
-        "Latest Version:    {{ latest_kustomize_cli_ver }}",
-        "URL for latest version: {{ latest_kustomize_cli_url }}"
+        "Installed Version: {{ __install_cloud_clis_installed_kustomize_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_kustomize_cli_ver }}",
+        "URL for latest version: {{ __install_cloud_clis_latest_kustomize_cli_url }}"
       ]
     verbosity: 1
 
-- name: Update kustomize executable (Block)
-  when: (not kustomize_cli_installed.stat.exists) or (installed_kustomize_cli_ver != latest_kustomize_cli_ver)
+- name: kustomize | Update kustomize executable (Block)
+  when: (not __install_cloud_clis_kustomize_cli_installed.stat.exists) or (__install_cloud_clis_installed_kustomize_cli_ver != __install_cloud_clis_latest_kustomize_cli_ver)
   block:
-    - name: Update kustomize executable
+    - name: kustomize | Update kustomize executable
       ansible.builtin.unarchive:
-        src: "{{ latest_kustomize_cli_url }}"
-        dest: "{{ ansible_user_dir }}/.local/bin"
+        src: "{{ __install_cloud_clis_latest_kustomize_cli_url }}"
+        dest: "{{ install_cloud_clis_bin_dir }}"
         remote_src: true
         include:
           - "kustomize"
 
-    - name: Add updated message
-      when: (installed_kustomize_cli_ver is defined) and (installed_kustomize_cli_ver != latest_kustomize_cli_ver)
+    - name: kustomize | Add updated message
+      when: (__install_cloud_clis_installed_kustomize_cli_ver is defined) and (__install_cloud_clis_installed_kustomize_cli_ver != __install_cloud_clis_latest_kustomize_cli_ver)
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated kustomize from " + installed_kustomize_cli_ver + " to " + latest_kustomize_cli_ver] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated kustomize from " + __install_cloud_clis_installed_kustomize_cli_ver + " to " + __install_cloud_clis_latest_kustomize_cli_ver] }}
 
-    - name: Add installed message
-      when: not kustomize_cli_installed.stat.exists
+    - name: kustomize | Add installed message
+      when: not __install_cloud_clis_kustomize_cli_installed.stat.exists
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Installed kustomize"] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed kustomize"] }}
 
-- name: Add kustomize command-line completion to .bashrc
+- name: kustomize | Add kustomize command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
     line: source <(kustomize completion bash)

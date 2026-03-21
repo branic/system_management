@@ -1,0 +1,6 @@
+---
+- name: Test install_cloud_clis role
+  hosts: localhost
+  connection: local
+  roles:
+    - role: install_cloud_clis

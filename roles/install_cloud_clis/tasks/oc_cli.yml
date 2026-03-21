@@ -1,66 +1,66 @@
 ---
-- name: Retrieve latest OC CLI release info
+- name: oc_cli | Retrieve latest OC CLI release info
   ansible.builtin.uri:
     url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/release.txt
     return_content: true
-  register: oc_cli_release_info
+  register: __install_cloud_clis_oc_cli_release_info
 
-- name: Determine latest OC CLI version
+- name: oc_cli | Determine latest OC CLI version
   ansible.builtin.set_fact:
-    latest_oc_cli_ver: "{{ oc_cli_release_info['content'] | regex_replace('(?s).*^Release Metadata:\\s+Version:\\s+(?P<version>[0-9.]+).*$', '\\g<version>', multiline=True) }}"
+    __install_cloud_clis_latest_oc_cli_ver: "{{ __install_cloud_clis_oc_cli_release_info['content'] | regex_replace('(?s).*^Release Metadata:\\s+Version:\\s+(?P<version>[0-9.]+).*$', '\\g<version>', multiline=True) }}"
 
-- name: Check if OC CLI binary installed
+- name: oc_cli | Check if OC CLI binary installed
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.local/bin/oc"
-  register: oc_cli_installed
+    path: "{{ install_cloud_clis_bin_dir }}/oc"
+  register: __install_cloud_clis_oc_cli_installed
 
-- name: Check OC CLI versions (Block)
-  when: oc_cli_installed.stat.exists
+- name: oc_cli | Check OC CLI versions (Block)
+  when: __install_cloud_clis_oc_cli_installed.stat.exists
   block:
-    - name: Retrieve installed OC CLI version
+    - name: oc_cli | Retrieve installed OC CLI version
       ansible.builtin.command:
         cmd: oc version --client -o json
-      register: oc_ver_installed_result
+      register: __install_cloud_clis_oc_ver_installed_result
       changed_when: false
 
-    - name: Determine installed OC CLI version
+    - name: oc_cli | Determine installed OC CLI version
       ansible.builtin.set_fact:
-        installed_oc_cli_ver: "{{ (oc_ver_installed_result.stdout | from_json)['releaseClientVersion'] }}"
+        __install_cloud_clis_installed_oc_cli_ver: "{{ (__install_cloud_clis_oc_ver_installed_result.stdout | from_json)['releaseClientVersion'] }}"
 
-- name: Display OC CLI version info
+- name: oc_cli | Display OC CLI version info
   ansible.builtin.debug:
     msg: |
       [
-        "Installed Version: {{ installed_oc_cli_ver | default('NOT INSTALLED') }}",
-        "Latest Version:    {{ latest_oc_cli_ver }}",
+        "Installed Version: {{ __install_cloud_clis_installed_oc_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_oc_cli_ver }}",
       ]
     verbosity: 1
 
-- name: Update OC CLI executable (Block)
-  when: (not oc_cli_installed.stat.exists) or (installed_oc_cli_ver != latest_oc_cli_ver)
+- name: oc_cli | Update OC CLI executable (Block)
+  when: (not __install_cloud_clis_oc_cli_installed.stat.exists) or (__install_cloud_clis_installed_oc_cli_ver != __install_cloud_clis_latest_oc_cli_ver)
   block:
-    - name: Update OC CLI executable
+    - name: oc_cli | Update OC CLI executable
       ansible.builtin.unarchive:
         src: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz
-        dest: "{{ ansible_user_dir }}/.local/bin"
+        dest: "{{ install_cloud_clis_bin_dir }}"
         remote_src: true
         include:
           - "oc"
           - "kubectl"
 
-    - name: Add updated message
-      when: (installed_oc_cli_ver is defined) and (installed_oc_cli_ver != latest_oc_cli_ver)
+    - name: oc_cli | Add updated message
+      when: (__install_cloud_clis_installed_oc_cli_ver is defined) and (__install_cloud_clis_installed_oc_cli_ver != __install_cloud_clis_latest_oc_cli_ver)
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated OC CLI from " + installed_oc_cli_ver + " to " + latest_oc_cli_ver] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated OC CLI from " + __install_cloud_clis_installed_oc_cli_ver + " to " + __install_cloud_clis_latest_oc_cli_ver] }}
 
-    - name: Add installed message
-      when: not oc_cli_installed.stat.exists
+    - name: oc_cli | Add installed message
+      when: not __install_cloud_clis_oc_cli_installed.stat.exists
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Installed OC CLI"] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed OC CLI"] }}
 
-- name: Add oc command-line completion to .bashrc
+- name: oc_cli | Add oc command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
     line: source <(oc completion bash)

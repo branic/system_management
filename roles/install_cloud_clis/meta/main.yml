@@ -17,21 +17,10 @@ galaxy_info:
   # - CC-BY-4.0
   license: GPL-3.0-only
 
-  min_ansible_version: "2.11"
+  min_ansible_version: "2.16"
 
   # If this a Container Enabled role, provide the minimum Ansible Container version.
   # min_ansible_container_version:
-
-  #
-  # Provide a list of supported platforms, and for each platform a list of versions.
-  # If you don't wish to enumerate all versions for a particular platform, use 'all'.
-  # To view available platforms and versions (or releases), visit:
-  # https://galaxy.ansible.com/api/v1/platforms/
-  #
-  platforms:
-    - name: EL
-      versions:
-        - all
 
   galaxy_tags: []
     # List tags for your role here, one per line. A tag is a keyword that describes

@@ -1,53 +1,54 @@
 ---
-# tasks file for install_clis
-
-- name: Gather minimal facts
+- name: Ensure ansible_user_dir fact is available
+  when: ansible_user_dir is not defined
   ansible.builtin.setup:
     gather_subset:
       - "!all"
+      - min
 
 - name: Update CLIs (Block)
   block:
     - name: Install AWS CLI
+      when: "'aws' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: aws_cli.yml
 
     - name: Install OC CLI
+      when: "'oc' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: oc_cli.yml
 
     - name: Install ROSA CLI
+      when: "'rosa' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: rosa_cli.yml
 
     - name: Install Tekton CLI
+      when: "'tekton' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: tekton_cli.yml
 
     - name: Install kube-linter
+      when: "'kube_linter' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: kube-linter.yml
 
     - name: Install kustomize
+      when: "'kustomize' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: kustomize.yml
 
     - name: Install stern
+      when: "'stern' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: stern.yml
 
     - name: Install helm
+      when: "'helm' in install_cloud_clis_components"
       ansible.builtin.include_tasks:
         file: helm.yml
-
-  # rescue:
-  #   - name: Error encountered
-  #     ansible.builtin.debug:
-  #       msg: |
-  #         "An error was encountered in the '{{ ansible_failed_task.name }}'"
-  #         "{{ ansible_failed_result }}"
 
   always:
     - name: Display upgrade results
       ansible.builtin.debug:
-        msg: "{{ (__cloud_cli_update_results | length > 0) | ternary(__cloud_cli_update_results, 'All CLIs are already at the latest version') }}"
+        msg: "{{ (install_cloud_clis_update_messages | length > 0) | ternary(install_cloud_clis_update_messages, 'All CLIs are already at the latest version') }}"
