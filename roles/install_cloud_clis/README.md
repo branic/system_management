@@ -22,7 +22,7 @@ Binaries are placed under **`install_cloud_clis_bin_dir`** (default `{{ ansible_
 ## Facts and connection
 
 - Paths use **`ansible_user_dir`**. If `ansible_user_dir` is not already available (for example `gather_facts: false` in the play), the role runs `setup` with a minimal fact subset (`!all` + `min`) so it is defined.
-- Run the play **as the user** whose home should receive the CLIs (`ansible_user` / remote user). This role is not aimed at `become: true` as root while configuring another user’s home unless you set facts accordingly.
+- Run the play **as the user** whose home should receive the CLIs (`ansible_user` / remote user). This role is not aimed at `become: true` as root while configuring another user's home unless you set facts accordingly.
 
 ## Role variables
 

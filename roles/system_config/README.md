@@ -23,7 +23,7 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `system_config_groups` | Optional list of group definitions: `name` (required), optional `gid`, `system`. |
 | `system_config_users` | Optional list of user definitions: `name` (required); optional `uid`, `comment`, `groups`, `shell`, `system`, `create_home`, `password`, `update_password` (`on_create` / `always`). |
 
-Omit `groups` on a user entry if that user should not receive secondary groups via this task’s `groups` parameter.
+Omit `groups` on a user entry if that user should not receive secondary groups via this task's `groups` parameter.
 
 ## Dependencies
 
