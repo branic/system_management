@@ -1,0 +1,7 @@
+[Context]
+{% if user_config_slack_flatpak_sockets %}
+sockets=system-bus;session-bus;wayland;!x11
+{% endif %}
+{% if user_config_slack_flatpak_filesystems | default([]) | length > 0 %}
+filesystems={{ user_config_slack_flatpak_filesystems | join(';') }}
+{% endif %}

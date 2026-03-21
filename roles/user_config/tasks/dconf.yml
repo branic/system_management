@@ -1,0 +1,18 @@
+---
+- name: Dconf | Disable Gnome Software update downloads
+  community.general.dconf:
+    key: /org/gnome/software/download-updates
+    value: "false"
+    state: present
+
+- name: Dconf | Show battery percentage
+  community.general.dconf:
+    key: /org/gnome/desktop/interface/show-battery-percentage
+    value: "true"
+    state: present
+
+- name: Dconf | Disable auto maximizing windows
+  community.general.dconf:
+    key: /org/gnome/mutter/auto-maximize
+    value: "false"
+    state: present

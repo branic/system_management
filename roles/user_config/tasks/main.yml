@@ -1,0 +1,21 @@
+---
+# tasks file for user_config
+
+- name: Ensure ansible_user_dir fact is available
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - min
+  when: ansible_user_dir is not defined
+
+- name: Include DConf tasks
+  ansible.builtin.include_tasks:
+    file: dconf.yml
+
+- name: Include Flatpak tasks
+  ansible.builtin.include_tasks:
+    file: flatpak.yml
+
+- name: Include GTK tasks
+  ansible.builtin.include_tasks:
+    file: gtk.yml
