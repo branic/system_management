@@ -1,0 +1,13 @@
+---
+# defaults file for user_config
+
+# When true, grant Slack flatpak socket permissions (system/session bus, wayland, no x11).
+user_config_slack_flatpak_sockets: true
+
+# List of extra filesystem paths for the Slack flatpak override (e.g. "~/tmp/", "xdg-documents").
+# If empty or unset, the filesystems line is omitted from the override file.
+user_config_slack_flatpak_filesystems: []
+
+# GTK 3 sidebar bookmarks (~/.config/gtk-3.0/bookmarks). Each item: path (required), name (optional).
+# path: file:// URI, absolute path, ~ or ~/ (managed user's home), or path relative to that home.
+user_config_gtk_bookmarks: []

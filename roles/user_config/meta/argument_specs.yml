@@ -1,0 +1,42 @@
+---
+argument_specs:
+  main:
+    short_description: Per-user GTK, Flatpak overrides, and DConf preferences
+    description:
+      - Configures the Ansible connection user's home (GTK bookmarks, Slack Flatpak overrides, GNOME DConf keys).
+    author:
+      - Brant Evans
+    options:
+      user_config_slack_flatpak_sockets:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, grant Slack Flatpak socket permissions (system/session bus, Wayland, not X11).
+
+      user_config_slack_flatpak_filesystems:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - Extra filesystem paths for the Slack Flatpak override (e.g. "~/tmp/", "xdg-documents").
+          - When empty, the filesystems line is omitted from the override file.
+
+      user_config_gtk_bookmarks:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - GTK 3 sidebar bookmarks written to ~/.config/gtk-3.0/bookmarks.
+        options:
+          path:
+            type: str
+            required: true
+            description:
+              - Bookmark path as file:// URI, absolute path, "~", "~/", or path relative to the user's home.
+          name:
+            type: str
+            required: false
+            description: Optional display name for the bookmark.
