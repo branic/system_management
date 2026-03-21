@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - Add ``system_config`` and ``user_config`` roles; align roles with standard conventions; update configs
+trivial:
+  - Update collection README
