@@ -1,0 +1,38 @@
+---
+argument_specs:
+  main:
+    short_description: Install and update cloud and Kubernetes CLIs for the connection user
+    description:
+      - Installs or updates CLIs under install_cloud_clis_bin_dir (default ~/.local/bin) for ansible_user_dir.
+    author:
+      - Brant Evans
+    options:
+      install_cloud_clis_components:
+        type: list
+        elements: str
+        required: false
+        default:
+          - aws
+          - oc
+          - rosa
+          - tekton
+          - kube_linter
+          - kustomize
+          - stern
+          - helm
+        description:
+          - Which CLIs to install or update. Allowed values are aws, oc, rosa, tekton, kube_linter, kustomize, stern, helm.
+
+      install_cloud_clis_bin_dir:
+        type: str
+        required: false
+        default: "{{ ansible_user_dir }}/.local/bin"
+        description:
+          - Directory where CLI binaries are installed (must be on PATH for interactive use).
+
+      install_cloud_clis_aws_install_root:
+        type: str
+        required: false
+        default: "{{ ansible_user_dir }}/.local/aws-cli"
+        description:
+          - AWS CLI installation directory (-i) passed to the official AWS CLI installer.

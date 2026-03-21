@@ -1,115 +1,122 @@
 ---
-- name: Check if AWS CLI binary installed
+- name: aws_cli | Check if AWS CLI binary installed
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.local/bin/aws"
-  register: aws_cli_installed
+    path: "{{ install_cloud_clis_bin_dir }}/aws"
+  register: __install_cloud_clis_aws_cli_installed
 
-- name: Check AWS CLI versions (Block)
-  when: aws_cli_installed.stat.exists
+- name: aws_cli | Check AWS CLI versions (Block)
+  when: __install_cloud_clis_aws_cli_installed.stat.exists
   block:
-    - name: Retrieve AWS CLI versions
+    - name: aws_cli | Retrieve AWS CLI versions
       ansible.builtin.uri:
         url: https://api.github.com/repos/aws/aws-cli/tags
-      register: aws_cli_versions
+      register: __install_cloud_clis_aws_cli_versions
 
-    - name: Determine latest AWS CLI version
+    - name: aws_cli | Determine latest AWS CLI version
       ansible.builtin.set_fact:
-        latest_aws_cli_ver: "{{ aws_cli_versions.json[0]['name'] }}"
+        __install_cloud_clis_latest_aws_cli_ver: "{{ __install_cloud_clis_aws_cli_versions.json[0]['name'] }}"
 
-    - name: Retrieve installed AWS CLI version
+    - name: aws_cli | Retrieve installed AWS CLI version
       ansible.builtin.command:
         cmd: aws --version
-      register: aws_ver_installed_result
+      register: __install_cloud_clis_aws_ver_installed_result
       changed_when: false
 
-    - name: Determine installed AWS CLI version
+    - name: aws_cli | Determine installed AWS CLI version
       ansible.builtin.set_fact:
-        installed_aws_cli_ver: "{{ aws_ver_installed_result.stdout | regex_replace('^aws-cli/([0-9.]+).*$', '\\1') }}"
+        __install_cloud_clis_installed_aws_cli_ver: "{{ __install_cloud_clis_aws_ver_installed_result.stdout | regex_replace('^aws-cli/([0-9.]+).*$', '\\1') }}"
 
-- name: Display AWS CLI version info
+- name: aws_cli | Display AWS CLI version info
   ansible.builtin.debug:
     msg: |
       [
-        "Installed Version: {{ installed_aws_cli_ver | default('NOT INSTALLED') }}",
-        "Latest Version:    {{ latest_aws_cli_ver }}",
+        "Installed Version: {{ __install_cloud_clis_installed_aws_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_aws_cli_ver }}",
       ]
     verbosity: 1
 
-- name: Update AWS CLI (Block)
-  when: (not aws_cli_installed.stat.exists) or (installed_aws_cli_ver != latest_aws_cli_ver)
+- name: aws_cli | Update AWS CLI (Block)
+  when: (not __install_cloud_clis_aws_cli_installed.stat.exists) or (__install_cloud_clis_installed_aws_cli_ver != __install_cloud_clis_latest_aws_cli_ver)
   block:
-    - name: Create temporary directory
+    - name: aws_cli | Create temporary directory
       ansible.builtin.tempfile:
         state: directory
-      register: aws_temp_dir
+      register: __install_cloud_clis_aws_temp_dir
 
     # See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-    - name: Unzip the AWS CLI installer
+    - name: aws_cli | Unzip the AWS CLI installer
       ansible.builtin.unarchive:
         src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-        dest: "{{ aws_temp_dir['path'] }}"
+        dest: "{{ __install_cloud_clis_aws_temp_dir['path'] }}"
         remote_src: true
 
-    - name: Update AWS CLI
+    - name: aws_cli | Update AWS CLI
       ansible.builtin.command:
-        cmd: ./aws/install -i {{ ansible_user_dir }}/.local/aws-cli -b {{ ansible_user_dir }}/.local/bin --update
-        chdir: "{{ aws_temp_dir['path'] }}"
+        cmd: ./aws/install -i {{ install_cloud_clis_aws_install_root }} -b {{ install_cloud_clis_bin_dir }} --update
+        chdir: "{{ __install_cloud_clis_aws_temp_dir['path'] }}"
       changed_when: true
 
-    - name: Remove temporary directory
+    - name: aws_cli | Remove temporary directory
+      when: __install_cloud_clis_aws_temp_dir['path'] is defined
       ansible.builtin.file:
-        path: "{{ aws_temp_dir['path'] }}"
+        path: "{{ __install_cloud_clis_aws_temp_dir['path'] }}"
         state: absent
-      when: aws_temp_dir['path'] is defined
 
-    - name: Add updated message
-      when: (installed_aws_cli_ver is defined) and (installed_aws_cli_ver != latest_aws_cli_ver)
+    - name: aws_cli | Add updated message
+      when: (__install_cloud_clis_installed_aws_cli_ver is defined) and (__install_cloud_clis_installed_aws_cli_ver != __install_cloud_clis_latest_aws_cli_ver)
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated AWS CLI from " + installed_aws_cli_ver + " to " + latest_aws_cli_ver] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated AWS CLI from " + __install_cloud_clis_installed_aws_cli_ver + " to " + __install_cloud_clis_latest_aws_cli_ver] }}
 
-    - name: Add installed message
-      when: not aws_cli_installed.stat.exists
+    - name: aws_cli | Add installed message
+      when: not __install_cloud_clis_aws_cli_installed.stat.exists
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Installed AWS CLI"] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed AWS CLI"] }}
 
-- name: Find old major versions to cleanup
+- name: aws_cli | Find old major versions to cleanup
   ansible.builtin.find:
     paths:
-      - "{{ ansible_user_dir }}/.local/aws-cli"
+      - "{{ install_cloud_clis_aws_install_root }}"
     file_type: directory
     recurse: false
-  register: __aws_cli_major_version_dirs_result
+  register: __install_cloud_clis_aws_cli_major_version_dirs_result
 
-- name: Create major version directory list
+- name: aws_cli | Create major version directory list
   ansible.builtin.set_fact:
-    __aws_cli_major_version_dirs: "{{ __aws_cli_major_version_dirs | default([]) + [__aws_cli_mvd['path']] }}"
-  loop: "{{ __aws_cli_major_version_dirs_result['files'] }}"
+    __install_cloud_clis_aws_cli_major_version_dirs: "{{ __install_cloud_clis_aws_cli_major_version_dirs | default([]) + [__install_cloud_clis_aws_cli_mvd['path']] }}"
+  loop: "{{ __install_cloud_clis_aws_cli_major_version_dirs_result['files'] }}"
   loop_control:
-    loop_var: __aws_cli_mvd
-    label: "Adding {{ __aws_cli_mvd['path'] }}"
+    loop_var: __install_cloud_clis_aws_cli_mvd
+    label: "Adding {{ __install_cloud_clis_aws_cli_mvd['path'] }}"
 
-- name: Find versions to remove
+- name: aws_cli | Default major version directory list when empty
+  when: __install_cloud_clis_aws_cli_major_version_dirs is not defined
+  ansible.builtin.set_fact:
+    __install_cloud_clis_aws_cli_major_version_dirs: []
+
+- name: aws_cli | Find versions to remove
+  when: __install_cloud_clis_aws_cli_major_version_dirs | length > 0
   ansible.builtin.find:
-    paths: "{{ __aws_cli_major_version_dirs }}"
+    paths: "{{ __install_cloud_clis_aws_cli_major_version_dirs }}"
     file_type: directory
     recurse: false
     excludes:
-      - "{{ latest_aws_cli_ver }}"
-      - "{{ installed_aws_cli_ver }}"
-  register: __aws_cli_vers_to_del_result
+      - "{{ __install_cloud_clis_latest_aws_cli_ver }}"
+      - "{{ __install_cloud_clis_installed_aws_cli_ver }}"
+  register: __install_cloud_clis_aws_cli_vers_to_del_result
 
-- name: Remove old versions that were found
+- name: aws_cli | Remove old versions that were found
+  when: __install_cloud_clis_aws_cli_vers_to_del_result is defined
   ansible.builtin.file:
-    path: "{{ __aws_cli_ver_to_del['path'] }}"
+    path: "{{ __install_cloud_clis_aws_cli_ver_to_del['path'] }}"
     state: absent
-  loop: "{{ __aws_cli_vers_to_del_result['files'] }}"
+  loop: "{{ __install_cloud_clis_aws_cli_vers_to_del_result['files'] }}"
   loop_control:
-    loop_var: __aws_cli_ver_to_del
-    label: "Removing {{ __aws_cli_ver_to_del['path'] }}"
+    loop_var: __install_cloud_clis_aws_cli_ver_to_del
+    label: "Removing {{ __install_cloud_clis_aws_cli_ver_to_del['path'] }}"
 
-- name: Add aws command-line completion to .bashrc
+- name: aws_cli | Add aws command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
-    line: complete -C '{{ ansible_user_dir }}/.local/bin/aws_completer' aws
+    line: complete -C '{{ install_cloud_clis_bin_dir }}/aws_completer' aws

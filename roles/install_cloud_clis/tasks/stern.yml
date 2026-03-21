@@ -1,88 +1,88 @@
 ---
-- name: Retrieve stern CLI versions
+- name: stern | Retrieve stern CLI versions
   ansible.builtin.uri:
     url: https://api.github.com/repos/stern/stern/releases
-  register: stern_cli_versions
+  register: __install_cloud_clis_stern_cli_versions
 
-- name: Determine latest stern GA release version details
+- name: stern | Determine latest stern GA release version details
   ansible.builtin.set_fact:
-    latest_stern_cli_ver_details: >-
-      {{ stern_cli_versions.json |
+    __install_cloud_clis_latest_stern_cli_ver_details: >-
+      {{ __install_cloud_clis_stern_cli_versions.json |
          selectattr('prerelease', 'equalto', false) |
          first
       }}
 
-- name: Determine latest stern version
+- name: stern | Determine latest stern version
   ansible.builtin.set_fact:
-    latest_stern_cli_ver: >-
-      {{ latest_stern_cli_ver_details['tag_name'] |
+    __install_cloud_clis_latest_stern_cli_ver: >-
+      {{ __install_cloud_clis_latest_stern_cli_ver_details['tag_name'] |
          regex_replace('^v(?P<version>[0-9.]+)$', '\g<version>')
       }}
 
-- name: Determine latest stern download URL
+- name: stern | Determine latest stern download URL
   ansible.builtin.set_fact:
-    latest_stern_cli_url: >-
-      {{ latest_stern_cli_ver_details['assets'] |
+    __install_cloud_clis_latest_stern_cli_url: >-
+      {{ __install_cloud_clis_latest_stern_cli_ver_details['assets'] |
          selectattr('name', 'contains', 'linux_amd64') |
          map(attribute='browser_download_url') |
          first
       }}
 
-- name: Check if stern binary installed
+- name: stern | Check if stern binary installed
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.local/bin/stern"
-  register: stern_cli_installed
+    path: "{{ install_cloud_clis_bin_dir }}/stern"
+  register: __install_cloud_clis_stern_cli_installed
 
-- name: Check stern versions (Block)
-  when: stern_cli_installed.stat.exists
+- name: stern | Check stern versions (Block)
+  when: __install_cloud_clis_stern_cli_installed.stat.exists
   block:
-    - name: Retrieve installed stern version
+    - name: stern | Retrieve installed stern version
       ansible.builtin.command:
         cmd: stern --version
-      register: stern_ver_installed_result
+      register: __install_cloud_clis_stern_ver_installed_result
       changed_when: false
 
-    - name: Determine installed stern version
+    - name: stern | Determine installed stern version
       ansible.builtin.set_fact:
-        installed_stern_cli_ver: >-
-          {{ stern_ver_installed_result.stdout |
+        __install_cloud_clis_installed_stern_cli_ver: >-
+          {{ __install_cloud_clis_stern_ver_installed_result.stdout |
              regex_replace('(?s)^version: (?P<version>[0-9.]+).*$', '\g<version>')
           }}
 
-- name: Display stern version info
+- name: stern | Display stern version info
   ansible.builtin.debug:
     msg: |
       [
-        "Installed Version: {{ installed_stern_cli_ver | default('NOT INSTALLED') }}",
-        "Latest Version:    {{ latest_stern_cli_ver }}",
-        "URL for latest version: {{ latest_stern_cli_url }}"
+        "Installed Version: {{ __install_cloud_clis_installed_stern_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_stern_cli_ver }}",
+        "URL for latest version: {{ __install_cloud_clis_latest_stern_cli_url }}"
       ]
     verbosity: 1
 
-- name: Update stern executable (Block)
-  when: (not stern_cli_installed.stat.exists) or (installed_stern_cli_ver != latest_stern_cli_ver)
+- name: stern | Update stern executable (Block)
+  when: (not __install_cloud_clis_stern_cli_installed.stat.exists) or (__install_cloud_clis_installed_stern_cli_ver != __install_cloud_clis_latest_stern_cli_ver)
   block:
-    - name: Update stern executable
+    - name: stern | Update stern executable
       ansible.builtin.unarchive:
-        src: "{{ latest_stern_cli_url }}"
-        dest: "{{ ansible_user_dir }}/.local/bin"
+        src: "{{ __install_cloud_clis_latest_stern_cli_url }}"
+        dest: "{{ install_cloud_clis_bin_dir }}"
         remote_src: true
         include:
           - "stern"
 
-    - name: Add updated message
-      when: (installed_stern_cli_ver is defined) and (installed_stern_cli_ver != latest_stern_cli_ver)
+    - name: stern | Add updated message
+      when: (__install_cloud_clis_installed_stern_cli_ver is defined) and (__install_cloud_clis_installed_stern_cli_ver != __install_cloud_clis_latest_stern_cli_ver)
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated stern from " + installed_stern_cli_ver + " to " + latest_stern_cli_ver] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated stern from " + __install_cloud_clis_installed_stern_cli_ver + " to " + __install_cloud_clis_latest_stern_cli_ver] }}
 
-    - name: Add installed message
-      when: not stern_cli_installed.stat.exists
+    - name: stern | Add installed message
+      when: not __install_cloud_clis_stern_cli_installed.stat.exists
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Installed stern"] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed stern"] }}
 
-- name: Add stern command-line completion to .bashrc
+- name: stern | Add stern command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
     line: source <(stern --completion=bash)

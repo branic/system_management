@@ -1,3 +1,4 @@
 ---
-# vars file for install_clis
-__cloud_cli_update_results: []
+# vars file for install_cloud_clis
+
+install_cloud_clis_update_messages: []

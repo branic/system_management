@@ -1,2 +1,14 @@
 ---
-# defaults file for install_clis
+install_cloud_clis_components:
+  - aws
+  - oc
+  - rosa
+  - tekton
+  - kube_linter
+  - kustomize
+  - stern
+  - helm
+
+install_cloud_clis_bin_dir: "{{ ansible_user_dir }}/.local/bin"
+
+install_cloud_clis_aws_install_root: "{{ ansible_user_dir }}/.local/aws-cli"

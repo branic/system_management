@@ -2,87 +2,87 @@
 ## This commented out code is simpler, but it doesn't always reflect the
 ## latest release. For example on 2023-12-19 version v3.13.3 was available,
 ## but this was returning version v3.13.1. So it's better to get from GitHub.
-# - name: Retrieve helm CLI versions
+# - name: helm | Retrieve helm CLI versions
 #   ansible.builtin.uri:
 #     url: https://get.helm.sh/helm-latest-version
 #     return_content: true
-#   register: helm_cli_latest_version_result
-
-# - name: Set version fact
+#   register: __install_cloud_clis_helm_cli_latest_version_result
+#
+# - name: helm | Set version fact
 #   ansible.builtin.set_fact:
-#     latest_helm_cli_ver: "{{ helm_cli_latest_version_result['content'] | trim }}"
+#     __install_cloud_clis_latest_helm_cli_ver: "{{ __install_cloud_clis_helm_cli_latest_version_result['content'] | trim }}"
 
-- name: Retrieve helm CLI versions
+- name: helm | Retrieve helm CLI versions
   ansible.builtin.uri:
     url: https://api.github.com/repos/helm/helm/releases
-  register: helm_cli_versions
+  register: __install_cloud_clis_helm_cli_versions
 
-- name: Determine latest helm GA release version details
+- name: helm | Determine latest helm GA release version details
   ansible.builtin.set_fact:
-    latest_helm_cli_ver_details: >-
-      {{ helm_cli_versions.json |
+    __install_cloud_clis_latest_helm_cli_ver_details: >-
+      {{ __install_cloud_clis_helm_cli_versions.json |
          selectattr('prerelease', 'equalto', false) |
          first
       }}
 
-- name: Determine latest helm version
+- name: helm | Determine latest helm version
   ansible.builtin.set_fact:
-    latest_helm_cli_ver: >-
-      {{ latest_helm_cli_ver_details['tag_name'] }}
+    __install_cloud_clis_latest_helm_cli_ver: >-
+      {{ __install_cloud_clis_latest_helm_cli_ver_details['tag_name'] }}
 
-- name: Check if helm binary installed
+- name: helm | Check if helm binary installed
   ansible.builtin.stat:
-    path: "{{ ansible_user_dir }}/.local/bin/helm"
-  register: helm_cli_installed
+    path: "{{ install_cloud_clis_bin_dir }}/helm"
+  register: __install_cloud_clis_helm_cli_installed
 
-- name: Check helm versions (Block)
-  when: helm_cli_installed.stat.exists
+- name: helm | Check helm versions (Block)
+  when: __install_cloud_clis_helm_cli_installed.stat.exists
   block:
-    - name: Retrieve installed helm version
+    - name: helm | Retrieve installed helm version
       ansible.builtin.command:
         cmd: helm version --template='{% raw %}{{ .Version }}{% endraw %}'
-      register: helm_installed_cli_version_result
+      register: __install_cloud_clis_helm_installed_cli_version_result
       changed_when: false
 
-    - name: Determine installed helm version
+    - name: helm | Determine installed helm version
       ansible.builtin.set_fact:
-        installed_helm_cli_ver: "{{ helm_installed_cli_version_result.stdout }}"
+        __install_cloud_clis_installed_helm_cli_ver: "{{ __install_cloud_clis_helm_installed_cli_version_result.stdout }}"
 
-- name: Display helm version info
+- name: helm | Display helm version info
   ansible.builtin.debug:
     msg: |
       [
-        "Installed Version: {{ installed_helm_cli_ver | default('NOT INSTALLED') }}",
-        "Latest Version:    {{ latest_helm_cli_ver }}",
+        "Installed Version: {{ __install_cloud_clis_installed_helm_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_helm_cli_ver }}",
       ]
     verbosity: 1
 
-- name: Update helm executable (Block)
-  when: (not helm_cli_installed.stat.exists) or (installed_helm_cli_ver != latest_helm_cli_ver)
+- name: helm | Update helm executable (Block)
+  when: (not __install_cloud_clis_helm_cli_installed.stat.exists) or (__install_cloud_clis_installed_helm_cli_ver != __install_cloud_clis_latest_helm_cli_ver)
   block:
-    - name: Update helm executable
+    - name: helm | Update helm executable
       ansible.builtin.unarchive:
-        src: https://get.helm.sh/helm-{{ latest_helm_cli_ver }}-linux-amd64.tar.gz
-        dest: "{{ ansible_user_dir }}/.local/bin"
+        src: https://get.helm.sh/helm-{{ __install_cloud_clis_latest_helm_cli_ver }}-linux-amd64.tar.gz
+        dest: "{{ install_cloud_clis_bin_dir }}"
         remote_src: true
         include:
           - "linux-amd64/helm"
         extra_opts:
           - --strip-components=1
 
-    - name: Add updated message
-      when: (installed_helm_cli_ver is defined) and (installed_helm_cli_ver != latest_helm_cli_ver)
+    - name: helm | Add updated message
+      when: (__install_cloud_clis_installed_helm_cli_ver is defined) and (__install_cloud_clis_installed_helm_cli_ver != __install_cloud_clis_latest_helm_cli_ver)
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Updated helm from " + installed_helm_cli_ver + " to " + latest_helm_cli_ver] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated helm from " + __install_cloud_clis_installed_helm_cli_ver + " to " + __install_cloud_clis_latest_helm_cli_ver] }}
 
-    - name: Add installed message
-      when: not helm_cli_installed.stat.exists
+    - name: helm | Add installed message
+      when: not __install_cloud_clis_helm_cli_installed.stat.exists
       ansible.builtin.set_fact:
-        __cloud_cli_update_results: >
-          {{ __cloud_cli_update_results + ["Installed helm"] }}
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed helm"] }}
 
-- name: Add helm command-line completion to .bashrc
+- name: helm | Add helm command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_user_dir }}/.bashrc"
     line: source <(helm completion bash)
