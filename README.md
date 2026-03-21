@@ -21,6 +21,15 @@ Some modules and plugins require external libraries. Please check the requiremen
 ## Included content
 
 <!--start collection content-->
+
+### Roles
+
+| Role                                                       | Summary                                            |
+| ---------------------------------------------------------- | -------------------------------------------------- |
+| [`user_config`](roles/user_config/README.md)               | Per-user settings and environment setup.           |
+| [`system_config`](roles/system_config/README.md)           | System settings and environment setup.             |
+| [`install_cloud_clis`](roles/install_cloud_clis/README.md) | Cloud and Kubernetes CLIs for the connection user. |
+
 <!--end collection content-->
 
 ## Using this collection
