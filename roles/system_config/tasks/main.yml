@@ -1,0 +1,10 @@
+---
+# tasks file for system_config
+
+- name: Include user and group tasks
+  ansible.builtin.include_tasks:
+    file: users_groups.yml
+
+- name: Include Flatpak tasks
+  ansible.builtin.include_tasks:
+    file: flatpak.yml

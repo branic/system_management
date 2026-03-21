@@ -1,0 +1,26 @@
+---
+- name: Users_groups | Create groups
+  loop: "{{ system_config_groups | default([]) }}"
+  loop_control:
+    label: "Configuring group: {{ item.name }}"
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid | default(omit) }}"
+    system: "{{ item.system | default(false) }}"
+    state: present
+
+- name: Users_groups | Create users
+  loop: "{{ system_config_users | default([]) }}"
+  loop_control:
+    label: "Configuring user: {{ item.name }}"
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid | default(omit) }}"
+    comment: "{{ item.comment | default(omit) }}"
+    groups: "{{ item.groups | default(omit) }}"
+    password: "{{ item.password | default(omit) }}"
+    update_password: "{{ item.update_password | default('on_create') }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    system: "{{ item.system | default(false) }}"
+    create_home: "{{ item.create_home | default(true) }}"
+    state: present

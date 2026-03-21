@@ -1,0 +1,6 @@
+---
+- name: Test system_config role
+  hosts: localhost
+  connection: local
+  roles:
+    - role: system_config
