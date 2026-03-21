@@ -1,0 +1,17 @@
+---
+# defaults file for system_config
+
+# system_config_flatpak_packages:
+#   - com.jgraph.drawio.desktop
+#   - com.mattjakeman.ExtensionManager
+#   - com.slack.Slack
+#   - im.riot.Riot
+#   - io.podman_desktop.PodmanDesktop
+#   # - org.flameshot.Flameshot
+#   # - org.gnome.DejaDup
+#   - org.shotcut.Shotcut
+#   - org.pgadmin.pgAdmin4
+#   - org.videolan.VLC
+#   - us.zoom.Zoom
+
+system_config_flatpak_packages: []

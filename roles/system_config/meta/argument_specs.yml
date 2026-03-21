@@ -1,0 +1,89 @@
+---
+argument_specs:
+  main:
+    short_description: Main entrypoint for the system_config role
+    description:
+      - This role configures a Fedora Linux system.
+    author:
+      - Brant Evans
+    options:
+      system_config_flatpak_packages:
+        type: "list"
+        elements: "str"
+        required: false
+        description:
+          - Flatpak application IDs to install from configured remotes (e.g. Flathub).
+      system_config_groups:
+        type: "list"
+        elements: "dict"
+        required: false
+        description: "A list of groups to create on the target system."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "The group name to be created."
+          gid:
+            type: "int"
+            required: false
+            description: "The GID to use when creating the group."
+          system:
+            type: "bool"
+            required: false
+            default: false
+            description: "Make the group a system group."
+      system_config_users:
+        type: "list"
+        elements: "dict"
+        required: false
+        description: "A list of users to create on the target system."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "The username of the user."
+          uid:
+            type: "int"
+            required: false
+            description: "The UID to use when creating the user."
+          comment:
+            type: "str"
+            required: false
+            description:
+              - "Information to place in the GECOS field."
+              - "This is usually the users full name."
+          groups:
+            type: "list"
+            elements: "str"
+            required: false
+            description: "List of additional groups that the user is a member of."
+          shell:
+            type: "str"
+            required: false
+            choices:
+              - "/bin/bash"
+              - "/bin/sh"
+              - "/bin/zsh"
+              - "/sbin/nologin"
+          system:
+            type: "bool"
+            required: false
+            default: false
+            description: "Make the user a system account."
+          create_home:
+            type: "bool"
+            required: false
+            default: true
+            description: "Create the users home directory."
+          password:
+            type: "str"
+            required: false
+            description: "Password to set for the user."
+          update_password:
+            type: "str"
+            required: false
+            default: "on_create"
+            choices:
+              - "on_create"
+              - "always"
+            description: "When to update the users password."

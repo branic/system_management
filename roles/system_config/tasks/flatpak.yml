@@ -1,0 +1,11 @@
+---
+- name: Flatpak | Enable Flathub remote
+  community.general.flatpak_remote:
+    name: flathub
+    flatpakrepo_url: https://dl.flathub.org/repo/
+    state: present
+
+- name: Flatpak | Install Flatpak packages
+  community.general.flatpak:
+    name: "{{ system_config_flatpak_packages }}"
+    state: latest
