@@ -1,0 +1,39 @@
+---
+# Resolves an extension when the user supplied name only (no url, no id). Requires loop item and shell version.
+
+- name: gnome_extensions_ego_by_name | Search extensions by name
+  ansible.builtin.uri:
+    url: >-
+      https://extensions.gnome.org/extension-query/?search={{ __user_config_gnome_ext_item.name | trim | urlencode }}
+    return_content: true
+    status_code: [200]
+  register: __user_config_ext_ego_query
+
+- name: gnome_extensions_ego_by_name | Parse extension-query JSON
+  ansible.builtin.set_fact:
+    __uc_ext_ego_query_json: "{{ __user_config_ext_ego_query.json if __user_config_ext_ego_query.json is defined else (__user_config_ext_ego_query.content | from_json) }}"
+
+- name: gnome_extensions_ego_by_name | Filter exact name match (first in API order)
+  ansible.builtin.set_fact:
+    __uc_ext_name_matches: >-
+      {{
+        __uc_ext_ego_query_json.extensions | default([])
+        | selectattr('name', 'equalto', __user_config_gnome_ext_item.name | trim)
+        | list
+      }}
+
+- name: gnome_extensions_ego_by_name | Require a name search hit
+  ansible.builtin.assert:
+    that:
+      - __uc_ext_name_matches | length > 0
+    fail_msg: >-
+      No extension on extensions.gnome.org has the exact name
+      "{{ __user_config_gnome_ext_item.name | trim }}".
+
+- name: gnome_extensions_ego_by_name | Set EGO primary key from name search
+  ansible.builtin.set_fact:
+    __uc_ext_ego_pk: "{{ __uc_ext_name_matches[0].pk }}"
+
+- name: gnome_extensions_ego_by_name | Load extension-info from extensions.gnome.org
+  ansible.builtin.include_tasks:
+    file: gnome_extensions_ego_extension_info.yml

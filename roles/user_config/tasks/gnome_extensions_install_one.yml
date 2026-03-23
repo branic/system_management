@@ -1,0 +1,250 @@
+---
+# One entry from user_config_gnome_extensions. Requires __user_config_gnome_ext_tempdir and __user_config_gnome_shell_version.
+
+- name: gnome_extensions_install_one | Require mapping entry
+  ansible.builtin.assert:
+    that:
+      - __user_config_gnome_ext_item is mapping
+    fail_msg: user_config_gnome_extensions entries must be dictionaries (id, name, and/or url).
+
+- name: gnome_extensions_install_one | Detect which keys are set
+  ansible.builtin.set_fact:
+    __uc_ext_has_url: >-
+      {{
+        __user_config_gnome_ext_item.url is defined
+        and (__user_config_gnome_ext_item.url | string | trim | length) > 0
+      }}
+    __uc_ext_has_id: >-
+      {{
+        __user_config_gnome_ext_item.id is defined
+        and __user_config_gnome_ext_item.id is not none
+        and (__user_config_gnome_ext_item.id | string | trim | length) > 0
+      }}
+    __uc_ext_has_name: >-
+      {{
+        __user_config_gnome_ext_item.name is defined
+        and (__user_config_gnome_ext_item.name | string | trim | length) > 0
+      }}
+
+- name: gnome_extensions_install_one | Require at least one of url, id, name
+  ansible.builtin.assert:
+    that:
+      - (__uc_ext_has_url | bool) or (__uc_ext_has_id | bool) or (__uc_ext_has_name | bool)
+    fail_msg: Each extension entry needs at least one of url, id, or name.
+
+- name: gnome_extensions_install_one | Common options
+  ansible.builtin.set_fact:
+    __uc_ext_force: "{{ __user_config_gnome_ext_item.force | default(false) | bool }}"
+    __uc_ext_enable: "{{ __user_config_gnome_ext_item.enable | default(true) | bool }}"
+
+- name: gnome_extensions_install_one | Reset per-iteration working facts
+  ansible.builtin.set_fact:
+    __uc_ext_full_download_url: ""
+    __uc_ext_ego_uuid: ""
+    __uc_ext_ego_pk: 0
+    __uc_ext_target_version: -1
+    __uc_ext_ego_json: {}
+    __uc_ext_ego_query_json: {}
+    __uc_ext_name_matches: []
+
+# --- Resolution: url > id > name ---
+
+- name: gnome_extensions_install_one | Resolve direct URL
+  when: __uc_ext_has_url | bool
+  ansible.builtin.set_fact:
+    __uc_ext_full_download_url: "{{ __user_config_gnome_ext_item.url | trim }}"
+    __uc_ext_ego_uuid: ""
+    __uc_ext_target_version: -1
+
+- name: gnome_extensions_install_one | Resolve extension via EGO id
+  when:
+    - not (__uc_ext_has_url | bool)
+    - __uc_ext_has_id | bool
+  ansible.builtin.include_tasks:
+    file: gnome_extensions_ego_by_id.yml
+
+- name: gnome_extensions_install_one | Resolve extension via EGO name search
+  when:
+    - not (__uc_ext_has_url | bool)
+    - not (__uc_ext_has_id | bool)
+    - __uc_ext_has_name | bool
+  ansible.builtin.include_tasks:
+    file: gnome_extensions_ego_by_name.yml
+
+- name: gnome_extensions_install_one | Require download_url from EGO when not using direct url
+  when: not (__uc_ext_has_url | bool)
+  ansible.builtin.assert:
+    that:
+      - ( __uc_ext_ego_json | default({}) ).download_url | default('') | string | length > 0
+    fail_msg: extensions.gnome.org did not return a download_url for this GNOME Shell version.
+
+- name: gnome_extensions_install_one | Require resolved download URL
+  ansible.builtin.assert:
+    that:
+      - __uc_ext_full_download_url | default('') | length > 0
+    fail_msg: Could not determine extension download URL.
+
+- name: gnome_extensions_install_one | Set local bundle path
+  ansible.builtin.set_fact:
+    __uc_ext_local_bundle: "{{ __user_config_gnome_ext_tempdir }}/ext-{{ __user_config_gnome_ext_item | to_json | hash('sha256') }}.zip"
+
+- name: gnome_extensions_install_one | Download extension bundle
+  ansible.builtin.get_url:
+    url: "{{ __uc_ext_full_download_url }}"
+    dest: "{{ __uc_ext_local_bundle }}"
+    mode: "0644"
+
+- name: gnome_extensions_install_one | Resolve UUID from extension bundle
+  when: __uc_ext_ego_uuid | default('') | length == 0
+  block:
+    - name: gnome_extensions_install_one | Read UUID from bundle when not from EGO
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - "import zipfile, json, sys; z = zipfile.ZipFile(sys.argv[1]); print(json.load(z.open('metadata.json'))['uuid'])"
+          - "{{ __uc_ext_local_bundle }}"
+      register: __user_config_ext_uuid_read
+      changed_when: false
+      check_mode: false
+
+    - name: gnome_extensions_install_one | Set UUID from bundle
+      ansible.builtin.set_fact:
+        __uc_ext_uuid: "{{ __user_config_ext_uuid_read.stdout | trim }}"
+
+- name: gnome_extensions_install_one | Set UUID from EGO
+  when: __uc_ext_ego_uuid | default('') | length > 0
+  ansible.builtin.set_fact:
+    __uc_ext_uuid: "{{ __uc_ext_ego_uuid }}"
+
+- name: gnome_extensions_install_one | Resolve version from zip metadata
+  when: __uc_ext_target_version | int < 0
+  block:
+    - name: gnome_extensions_install_one | Read version from zip when unknown (direct URL)
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import zipfile, json, sys
+            z = zipfile.ZipFile(sys.argv[1])
+            m = json.load(z.open("metadata.json"))
+            v = m.get("version")
+            if v is None:
+                print("")
+            else:
+                print(str(v).strip())
+          - "{{ __uc_ext_local_bundle }}"
+      register: __user_config_ext_zip_version
+      changed_when: false
+      check_mode: false
+
+    - name: gnome_extensions_install_one | Apply version from zip metadata
+      when: __user_config_ext_zip_version.stdout | trim | regex_search('^[0-9]+$') is not none
+      ansible.builtin.set_fact:
+        __uc_ext_target_version: "{{ __user_config_ext_zip_version.stdout | trim | int }}"
+
+- name: gnome_extensions_install_one | Query installed extension
+  ansible.builtin.command:
+    cmd: gnome-extensions info "{{ __uc_ext_uuid }}"
+  register: __user_config_ext_info
+  failed_when: false
+  changed_when: false
+  check_mode: false
+
+- name: gnome_extensions_install_one | Parse installed version from gnome-extensions info
+  ansible.builtin.set_fact:
+    __uc_ext_installed_version_raw: "{{ __user_config_ext_info.stdout | regex_findall('(?m)^Version:\\s*(\\d+)\\s*$') }}"
+
+- name: gnome_extensions_install_one | Stat on-disk extension metadata
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['user_dir'] }}/.local/share/gnome-shell/extensions/{{ __uc_ext_uuid }}/metadata.json"
+  register: __user_config_ext_metadata_stat
+
+# gnome-extensions list/info can lag behind the filesystem until GNOME Shell restarts; treat
+# metadata.json under ~/.local/share/gnome-shell/extensions/<uuid>/ as installed.
+- name: gnome_extensions_install_one | Set installed version from gnome-extensions info
+  when: __user_config_ext_info.rc == 0
+  ansible.builtin.set_fact:
+    __uc_ext_installed_version_int: >-
+      {{
+        (__uc_ext_installed_version_raw | first | int)
+        if (__uc_ext_installed_version_raw | length > 0) else -1
+      }}
+
+- name: gnome_extensions_install_one | Read on-disk metadata when session info is unavailable
+  when:
+    - __user_config_ext_info.rc != 0
+    - __user_config_ext_metadata_stat.stat.exists
+  block:
+    - name: gnome_extensions_install_one | Slurp on-disk metadata.json
+      ansible.builtin.slurp:
+        src: "{{ ansible_facts['user_dir'] }}/.local/share/gnome-shell/extensions/{{ __uc_ext_uuid }}/metadata.json"
+      register: __user_config_ext_metadata_slurp
+
+    - name: gnome_extensions_install_one | Set installed version from on-disk metadata
+      ansible.builtin.set_fact:
+        __uc_ext_installed_version_int: >-
+          {{
+            (
+              (__user_config_ext_metadata_slurp.content | b64decode | from_json).version
+              | default(-1, true) | int
+            )
+          }}
+
+- name: gnome_extensions_install_one | Set installed version when extension not present on disk
+  when:
+    - __user_config_ext_info.rc != 0
+    - not __user_config_ext_metadata_stat.stat.exists
+  ansible.builtin.set_fact:
+    __uc_ext_installed_version_int: -1
+
+- name: gnome_extensions_install_one | Detect whether extension is installed (session or on-disk)
+  ansible.builtin.set_fact:
+    __uc_ext_extension_present: >-
+      {{
+        (__user_config_ext_info.rc == 0)
+        or (__user_config_ext_metadata_stat.stat.exists | default(false))
+      }}
+
+- name: gnome_extensions_install_one | Decide if install or upgrade is needed
+  ansible.builtin.set_fact:
+    __uc_ext_need_install: >-
+      {{
+        __uc_ext_force
+        or (not __uc_ext_extension_present)
+        or (
+          (__uc_ext_target_version | int >= 0)
+          and (__uc_ext_installed_version_int | int >= 0)
+          and ((__uc_ext_target_version | int) > (__uc_ext_installed_version_int | int))
+        )
+      }}
+
+- name: gnome_extensions_install_one | Use force flag when reinstalling or upgrading
+  ansible.builtin.set_fact:
+    __uc_ext_use_f: >-
+      {{
+        __uc_ext_force
+        or (
+          (__uc_ext_target_version | int >= 0)
+          and (__uc_ext_installed_version_int | int >= 0)
+          and ((__uc_ext_target_version | int) > (__uc_ext_installed_version_int | int))
+        )
+      }}
+
+- name: gnome_extensions_install_one | Install or upgrade extension bundle
+  when: __uc_ext_need_install | bool
+  ansible.builtin.command:
+    argv: "{{ ['gnome-extensions', 'install'] + (['-f'] if __uc_ext_use_f | bool else []) + [__uc_ext_local_bundle] }}"
+  register: __user_config_ext_install
+  changed_when: __user_config_ext_install.rc == 0
+
+# org.gnome.shell enabled-extensions is updated once after all extensions are processed
+# (see gnome_extensions.yml) so dconf is read/written once and the list order is canonical.
+- name: gnome_extensions_install_one | Record UUID and enable flag for batch dconf update
+  ansible.builtin.set_fact:
+    __user_config_gnome_ext_enabled_plan: >-
+      {{
+        (__user_config_gnome_ext_enabled_plan | default([]))
+        + [{'uuid': __uc_ext_uuid, 'enable': __uc_ext_enable | bool}]
+      }}

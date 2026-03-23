@@ -1,0 +1,23 @@
+---
+# Requires __uc_ext_ego_pk and __user_config_gnome_shell_version (from parent loop).
+# Sets __user_config_ext_ego_info, __uc_ext_ego_json, __uc_ext_ego_uuid, __uc_ext_target_version, __uc_ext_full_download_url.
+
+- name: gnome_extensions_ego_extension_info | Query extension-info by pk
+  ansible.builtin.uri:
+    url: >-
+      https://extensions.gnome.org/extension-info/?pk={{ __uc_ext_ego_pk | int }}&shell_version={{ __user_config_gnome_shell_version }}
+    return_content: true
+    status_code: [200]
+  register: __user_config_ext_ego_info
+
+- name: gnome_extensions_ego_extension_info | Parse extension-info JSON
+  ansible.builtin.set_fact:
+    __uc_ext_ego_json: "{{ __user_config_ext_ego_info.json if __user_config_ext_ego_info.json is defined else (__user_config_ext_ego_info.content | from_json) }}"
+
+- name: gnome_extensions_ego_extension_info | Set facts from extension-info
+  ansible.builtin.set_fact:
+    __uc_ext_ego_uuid: "{{ __uc_ext_ego_json.uuid }}"
+    __uc_ext_target_version: "{{ __uc_ext_ego_json.version | int }}"
+    __uc_ext_full_download_url: "{{ _dl if (_dl is match('^https?://')) else ('https://extensions.gnome.org' ~ _dl) }}"
+  vars:
+    _dl: "{{ __uc_ext_ego_json.download_url | default('') | string }}"
