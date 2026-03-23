@@ -3,7 +3,7 @@ argument_specs:
   main:
     short_description: Install and update cloud and Kubernetes CLIs for the connection user
     description:
-      - Installs or updates CLIs under install_cloud_clis_bin_dir (default ~/.local/bin) for ansible_user_dir.
+      - Installs or updates CLIs under install_cloud_clis_bin_dir (default ~/.local/bin) for the connection user's home (ansible_facts user_dir).
     author:
       - Brant Evans
     options:
@@ -26,13 +26,13 @@ argument_specs:
       install_cloud_clis_bin_dir:
         type: str
         required: false
-        default: "{{ ansible_user_dir }}/.local/bin"
+        default: "{{ ansible_facts['user_dir'] }}/.local/bin"
         description:
           - Directory where CLI binaries are installed (must be on PATH for interactive use).
 
       install_cloud_clis_aws_install_root:
         type: str
         required: false
-        default: "{{ ansible_user_dir }}/.local/aws-cli"
+        default: "{{ ansible_facts['user_dir'] }}/.local/aws-cli"
         description:
           - AWS CLI installation directory (-i) passed to the official AWS CLI installer.
