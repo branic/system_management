@@ -1,4 +1,12 @@
 ---
+- name: Flatpak | Ensure per-user flatpak overrides directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['user_dir'] }}/.local/share/flatpak/overrides"
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
 - name: Flatpak | Create configuration file to set Slack flatpak permissions
   ansible.builtin.template:
     src: com.slack.Slack.overrides.j2
