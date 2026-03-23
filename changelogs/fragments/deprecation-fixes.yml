@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - fix ansible_user_dir deprecation warnings
+  - fix missing directories and default bookmarks include handling
+  - use a consistent home directory and UID/GID for templated user files
