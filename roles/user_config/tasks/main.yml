@@ -19,3 +19,8 @@
 - name: Include GTK tasks
   ansible.builtin.include_tasks:
     file: gtk.yml
+
+- name: Include GNOME Shell extension tasks
+  ansible.builtin.include_tasks:
+    file: gnome_extensions.yml
+  when: user_config_gnome_extensions | length > 0

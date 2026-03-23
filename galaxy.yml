@@ -13,7 +13,8 @@ authors:
 description: Fedora Linux system configuration and management
 license_file: LICENSE
 tags: ["linux", "tools", "fedora"]
-dependencies: {}
+dependencies:
+  "community.general": ">=8.0.0"
 
 repository: https://github.com/branic/system_management
 # documentation: http://docs.example.com

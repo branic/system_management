@@ -8,6 +8,13 @@ user_config_slack_flatpak_sockets: true
 # If empty or unset, the filesystems line is omitted from the override file.
 user_config_slack_flatpak_filesystems: []
 
+# When true, prepend GNOME-style default XDG bookmarks before user_config_gtk_bookmarks.
+user_config_gtk_include_default_bookmarks: true
+
 # GTK 3 sidebar bookmarks (~/.config/gtk-3.0/bookmarks). Each item: path (required), name (optional).
 # path: file:// URI, absolute path, ~ or ~/ (managed user's home), or path relative to that home.
 user_config_gtk_bookmarks: []
+
+# GNOME Shell extensions (see README). Each item is a dict with at least one of id, name, url.
+# Resolution order: url (if set) else id (if set) else name. Optional: enable (default true), force.
+user_config_gnome_extensions: []

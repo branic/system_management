@@ -1,0 +1,10 @@
+---
+# Resolves an extension when the user supplied id (and not url). Requires loop item and shell version.
+
+- name: gnome_extensions_ego_by_id | Set EGO primary key from user id
+  ansible.builtin.set_fact:
+    __uc_ext_ego_pk: "{{ __user_config_gnome_ext_item.id | int }}"
+
+- name: gnome_extensions_ego_by_id | Load extension-info from extensions.gnome.org
+  ansible.builtin.include_tasks:
+    file: gnome_extensions_ego_extension_info.yml

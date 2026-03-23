@@ -1,9 +1,9 @@
 ---
 argument_specs:
   main:
-    short_description: Per-user GTK, Flatpak overrides, and DConf preferences
+    short_description: Per-user configuration preferences
     description:
-      - Configures the Ansible connection user's home (GTK bookmarks, Slack Flatpak overrides, GNOME DConf keys).
+      - Configures the Ansible connection user's environment preferences.
     author:
       - Brant Evans
     options:
@@ -23,6 +23,13 @@ argument_specs:
           - Extra filesystem paths for the Slack Flatpak override (e.g. "~/tmp/", "xdg-documents").
           - When empty, the filesystems line is omitted from the override file.
 
+      user_config_gtk_include_default_bookmarks:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, prepend GNOME default bookmarks before user_config_gtk_bookmarks.
+
       user_config_gtk_bookmarks:
         type: list
         elements: dict
@@ -40,3 +47,43 @@ argument_specs:
             type: str
             required: false
             description: Optional display name for the bookmark.
+
+      user_config_gnome_extensions:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - GNOME Shell extensions to install with gnome-extensions.
+          - Each entry must include at least one of id, name, or url.
+          - Resolution precedence is url, then id, then name (if url is set, id and name are ignored for lookup).
+          - If both id and name are set without url, id is used.
+          - Extensions are resolved via extensions.gnome.org when using id or name; downloads use a temporary directory removed after the tasks complete.
+        options:
+          id:
+            type: int
+            required: false
+            description:
+              - Primary key of the extension on extensions.gnome.org (used when url is not set and id is set).
+          name:
+            type: str
+            required: false
+            description:
+              - Exact display name to search on extensions.gnome.org (used when url and id are not set).
+          url:
+            type: str
+            required: false
+            description:
+              - Direct HTTP(S) URL to the extension zip bundle (highest precedence when set).
+          enable:
+            type: bool
+            required: false
+            default: true
+            description:
+              - When true, run gnome-extensions enable after install; when false, run gnome-extensions disable.
+          force:
+            type: bool
+            required: false
+            default: false
+            description:
+              - When true, pass -f to gnome-extensions install and reinstall even if the catalog version is not newer.

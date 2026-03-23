@@ -1,0 +1,122 @@
+---
+# GNOME Shell extensions: resolve via extensions.gnome.org (id/name) or direct URL, install with gnome-extensions.
+
+- name: gnome_extensions | Require gnome-extensions command
+  ansible.builtin.command:
+    argv:
+      - command
+      - -v
+      - gnome-extensions
+  register: __user_config_gnome_ext_cli_check
+  changed_when: false
+  failed_when: false
+
+- name: gnome_extensions | Fail when gnome-extensions is missing
+  ansible.builtin.fail:
+    msg: >-
+      The gnome-extensions command is required but was not found in PATH.
+      Install the package that provides it (typically gnome-shell).
+  when: __user_config_gnome_ext_cli_check.rc != 0
+
+- name: gnome_extensions | Get GNOME Shell version
+  ansible.builtin.command:
+    cmd: gnome-shell --version
+  register: __user_config_gnome_shell_version_cmd
+  changed_when: false
+
+- name: gnome_extensions | Set GNOME Shell version number
+  ansible.builtin.set_fact:
+    __user_config_gnome_shell_version: "{{ __user_config_gnome_shell_version_cmd.stdout | regex_search('\\d+\\.\\d+(?:\\.\\d+)?') }}"
+  when: __user_config_gnome_shell_version_cmd.rc == 0
+
+- name: gnome_extensions | Require GNOME Shell version
+  ansible.builtin.assert:
+    that:
+      - __user_config_gnome_shell_version | default('', true) is match('^\d+\.\d+(?:\.\d+)?$')
+    fail_msg: >-
+      Could not determine GNOME Shell version. Ensure gnome-shell is installed and
+      `gnome-shell --version` prints a version number (e.g. GNOME Shell 49.4).
+
+- name: gnome_extensions | Create temporary directory for extension bundles
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: ansible-gnome-ext-
+  register: __user_config_gnome_ext_tempdir_result
+
+- name: gnome_extensions | Set temporary directory path fact
+  ansible.builtin.set_fact:
+    __user_config_gnome_ext_tempdir: "{{ __user_config_gnome_ext_tempdir_result.path }}"
+
+- name: gnome_extensions | Reset enabled-extensions plan for this run
+  ansible.builtin.set_fact:
+    __user_config_gnome_ext_enabled_plan: []
+
+- name: gnome_extensions | Process GNOME extensions (Block)
+  block:
+    - name: gnome_extensions | Process each extension
+      ansible.builtin.include_tasks:
+        file: gnome_extensions_install_one.yml
+      loop: "{{ user_config_gnome_extensions }}"
+      loop_control:
+        loop_var: __user_config_gnome_ext_item
+        label: >-
+          {%- set _i = __user_config_gnome_ext_item -%}
+          {%- set _has_url = _i.url is defined and (_i.url | string | trim | length) > 0 -%}
+          {%- set _has_id = _i.id is defined and _i.id is not none and (_i.id | string | trim | length) > 0 -%}
+          {%- set _has_name = _i.name is defined and (_i.name | string | trim | length) > 0 -%}
+          {%- if _has_url -%}
+          {{- _i.url | string | trim -}}
+          {%- elif _has_name and _has_id -%}
+          {{- _i.name | string | trim }} ({{ _i.id }}){%- elif _has_name -%}
+          {{- _i.name | string | trim -}}
+          {%- elif _has_id -%}
+          {{- _i.id -}}
+          {%- endif -%}
+
+    # gnome-extensions enable/disable talk to the running Shell; if the extension is not
+    # registered yet, they no-op. org.gnome.shell enabled-extensions (dconf) persists across
+    # logout/reboot, so merge UUIDs there explicitly — one read/write, sorted for idempotency.
+    - name: gnome_extensions | Read enabled-extensions from dconf
+      community.general.dconf:
+        key: /org/gnome/shell/enabled-extensions
+        state: read
+      register: __user_config_ext_dconf_enabled_extensions
+
+    # dconf prints a GVariant text form that looks like ['a', 'b'] (single quotes) — valid YAML
+    # flow sequence, but not valid JSON (JSON requires double-quoted strings).
+    - name: gnome_extensions | Parse current enabled-extensions list
+      ansible.builtin.set_fact:
+        __uc_ext_enabled_list_current: "{{ __user_config_ext_dconf_enabled_extensions.value | default('[]', true) | from_yaml }}"
+
+    - name: gnome_extensions | Initialize merged enabled-extensions from dconf
+      ansible.builtin.set_fact:
+        __uc_ext_enabled_list_merged: "{{ __uc_ext_enabled_list_current }}"
+
+    - name: gnome_extensions | Merge playbook extension enable flags into list
+      ansible.builtin.set_fact:
+        __uc_ext_enabled_list_merged: >-
+          {{
+            (__uc_ext_enabled_list_merged | union([item.uuid]))
+            if (item.enable | bool) else
+            (__uc_ext_enabled_list_merged | difference([item.uuid]))
+          }}
+      loop: "{{ __user_config_gnome_ext_enabled_plan }}"
+      loop_control:
+        label: "{{ item.uuid }}"
+
+    - name: gnome_extensions | Order enabled-extensions deterministically
+      ansible.builtin.set_fact:
+        __uc_ext_enabled_list_final: "{{ __uc_ext_enabled_list_merged | sort }}"
+
+    - name: gnome_extensions | Persist enabled-extensions in dconf
+      community.general.dconf:
+        key: /org/gnome/shell/enabled-extensions
+        value: '{{ "[''" + (__uc_ext_enabled_list_final | join("'', ''")) + "'']" if __uc_ext_enabled_list_final | length > 0 else "[]" }}'
+        state: present
+
+  always:
+    - name: gnome_extensions | Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ __user_config_gnome_ext_tempdir_result.path }}"
+        state: absent
+      when: __user_config_gnome_ext_tempdir_result.path | default('') | length > 0
