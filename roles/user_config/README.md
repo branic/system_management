@@ -1,6 +1,6 @@
 # user_config
 
-Configure per-user desktop settings for the **Ansible connection user**:
+Configure per-user desktop settings for the **user that runs this role** (the SSH connection user, or **`become_user`** when the role runs with privilege escalation):
 
 - GTK 3 sidebar bookmarks
 - Slack Flatpak overrides
@@ -16,8 +16,9 @@ Configure per-user desktop settings for the **Ansible connection user**:
 
 ## Facts and connection
 
-- Paths use **`ansible_facts['user_dir']`** (and `owner` / `group` from **`ansible_user`**). If `user_dir` is not in **`ansible_facts`** (for example `gather_facts: false` in the play), the role runs `setup` with a minimal fact subset to define it.
-- Run the play **as the user** whose home you are configuring (`ansible_user` / remote user). Using `become` to root and a different login user is not what this role is written for unless you also set facts accordingly.
+- The role **always** runs **`setup`** with a minimal subset (`!all` + `min`) as its first task so **`ansible_facts['user_dir']`** matches the **effective** user for the role (including **`become_user`**). That avoids stale `user_dir` values from an earlier play-level `gather_facts` that ran as the SSH user while the role runs as someone else.
+- Paths use **`ansible_facts['user_dir']`**. File **`owner`** / **`group`** use **`ansible_facts['user_id']`** and **`ansible_facts['user_gid']`** (same minimal `setup` as `user_dir`), so ownership matches the **effective** user (including **`become_user`**), not the SSH connection user.
+- Using **`become_user`** (for example connect as `ansible`, become `brant`) is supported for targeting that user’s home. Arbitrary `become` to root while configuring another account without **`become_user`** is still not what this role assumes.
 
 ## Role variables
 

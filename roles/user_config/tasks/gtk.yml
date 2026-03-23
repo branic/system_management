@@ -4,13 +4,13 @@
     path: "{{ ansible_facts['user_dir'] }}/.config/gtk-3.0"
     state: directory
     mode: "0755"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
 
 - name: Gtk | Configure GTK 3 bookmarks
   ansible.builtin.template:
     src: bookmarks.j2
     dest: "{{ ansible_facts['user_dir'] }}/.config/gtk-3.0/bookmarks"
     mode: "0644"
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
+    owner: "{{ ansible_facts['user_id'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"

@@ -1,6 +1,5 @@
 ---
-- name: Ensure user home directory fact is available
-  when: "'user_dir' not in ansible_facts"
+- name: Gather minimal facts
   ansible.builtin.setup:
     gather_subset:
       - "!all"
