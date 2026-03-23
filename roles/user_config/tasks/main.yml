@@ -1,12 +1,12 @@
 ---
 # tasks file for user_config
 
-- name: Ensure ansible_user_dir fact is available
+- name: Ensure user home directory fact is available
   ansible.builtin.setup:
     gather_subset:
       - "!all"
       - min
-  when: ansible_user_dir is not defined
+  when: "'user_dir' not in ansible_facts"
 
 - name: Include DConf tasks
   ansible.builtin.include_tasks:
