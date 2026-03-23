@@ -22,7 +22,7 @@ Binaries are placed under **`install_cloud_clis_bin_dir`** (default `{{ ansible_
 ## Facts and connection
 
 - The role **always** runs **`setup`** with a minimal subset (`!all` + `min`) as its first task so **`ansible_facts['user_dir']`** matches the **effective** user for the role (including **`become_user`**). That avoids stale `user_dir` values from an earlier play-level `gather_facts` that ran as the SSH user while the role runs as someone else.
-- Default paths under **`install_cloud_clis_bin_dir`** and **`install_cloud_clis_aws_install_root`** use that refreshed `user_dir`. Connect as one user and set **`become_user`** on the role if the CLIs should live in that user’s home.
+- Default paths under **`install_cloud_clis_bin_dir`** and **`install_cloud_clis_aws_install_root`** use that refreshed `user_dir`. Connect as one user and set **`become_user`** on the role if the CLIs should live in that user's home.
 
 ## Role variables
 
