@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - install_cloud_clis role - resolve ROSA CLI latest stable from GitHub releases and download from mirror.openshift.com/pub/cgw/rosa
