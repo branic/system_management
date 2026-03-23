@@ -1,2 +1,10 @@
 ---
 # vars file for user_config
+
+# GNOME default bookmarks (Documents, Downloads, etc.) prepended when user_config_gtk_include_default_bookmarks is true.
+__user_config_gtk_default_bookmarks:
+  - path: "~/Documents"
+  - path: "~/Downloads"
+  - path: "~/Music"
+  - path: "~/Pictures"
+  - path: "~/Videos"

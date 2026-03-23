@@ -1,17 +1,19 @@
 {# GTK 3 bookmarks: one line per entry; optional display name after a space. #}
-{% for b in user_config_gtk_bookmarks %}
+{% set _gtk_bookmarks = (__user_config_gtk_default_bookmarks + user_config_gtk_bookmarks)
+   if (__user_config_gtk_include_default_bookmarks | default(true)) else user_config_gtk_bookmarks %}
+{% for b in _gtk_bookmarks %}
 {% set p = b.path %}
 {% set ns = namespace(line='') %}
 {% if p.startswith('file://') %}
 {% set ns.line = 'file://' + (p[7:] | replace(' ', '%20')) %}
 {% elif p == '~' %}
-{% set ns.line = 'file://' + (ansible_user_dir | replace(' ', '%20')) %}
+{% set ns.line = 'file://' + (ansible_facts['user_dir'] | replace(' ', '%20')) %}
 {% elif p.startswith('~/') %}
-{% set ns.line = 'file://' + ((ansible_user_dir ~ '/' ~ p[2:]) | replace(' ', '%20')) %}
+{% set ns.line = 'file://' + ((ansible_facts['user_dir'] ~ '/' ~ p[2:]) | replace(' ', '%20')) %}
 {% elif p.startswith('/') %}
 {% set ns.line = 'file://' + (p | replace(' ', '%20')) %}
 {% else %}
-{% set ns.line = 'file://' + ((ansible_user_dir ~ '/' ~ p) | replace(' ', '%20')) %}
+{% set ns.line = 'file://' + ((ansible_facts['user_dir'] ~ '/' ~ p) | replace(' ', '%20')) %}
 {% endif %}
 {% if b.name is defined and b.name | length > 0 %}
 {{ ns.line }} {{ b.name }}
