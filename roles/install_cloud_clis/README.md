@@ -1,6 +1,6 @@
 # install_cloud_clis
 
-Install and update common **cloud and Kubernetes CLIs** for the **Ansible connection user**:
+Install and update common **cloud and Kubernetes CLIs** for the **user that runs this role** (the SSH connection user, or **`become_user`** when the role runs with privilege escalation):
 
 - AWS CLI
 - OpenShift CLI (`oc`) and `kubectl`
@@ -21,8 +21,8 @@ Binaries are placed under **`install_cloud_clis_bin_dir`** (default `{{ ansible_
 
 ## Facts and connection
 
-- Paths use **`ansible_facts['user_dir']`**. If `user_dir` is not in **`ansible_facts`** (for example `gather_facts: false` in the play), the role runs `setup` with a minimal fact subset (`!all` + `min`) so it is defined.
-- Run the play **as the user** whose home should receive the CLIs (`ansible_user` / remote user). This role is not aimed at `become: true` as root while configuring another user's home unless you set facts accordingly.
+- The role **always** runs **`setup`** with a minimal subset (`!all` + `min`) as its first task so **`ansible_facts['user_dir']`** matches the **effective** user for the role (including **`become_user`**). That avoids stale `user_dir` values from an earlier play-level `gather_facts` that ran as the SSH user while the role runs as someone else.
+- Default paths under **`install_cloud_clis_bin_dir`** and **`install_cloud_clis_aws_install_root`** use that refreshed `user_dir`. Connect as one user and set **`become_user`** on the role if the CLIs should live in that user’s home.
 
 ## Role variables
 
