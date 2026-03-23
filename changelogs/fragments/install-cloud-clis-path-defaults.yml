@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - install_cloud_clis role - apply install_cloud_clis_bin_dir and install_cloud_clis_aws_install_root defaults in tasks after facts instead of argument_specs and role defaults, so validate_argument_spec works when play gather_facts is false
+minor_changes:
+  - install_cloud_clis - create install_cloud_clis_bin_dir before CLI install tasks when the directory is missing

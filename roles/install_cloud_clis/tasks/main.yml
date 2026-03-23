@@ -5,6 +5,17 @@
       - "!all"
       - min
 
+- name: Apply default install_cloud_clis_bin_dir when not set by caller
+  ansible.builtin.set_fact:
+    install_cloud_clis_bin_dir: "{{ ansible_facts['user_dir'] }}/.local/bin"
+  when: install_cloud_clis_bin_dir is not defined
+
+- name: Ensure install_cloud_clis_bin_dir exists
+  ansible.builtin.file:
+    path: "{{ install_cloud_clis_bin_dir }}"
+    state: directory
+    mode: "0755"
+
 - name: Update CLIs (Block)
   block:
     - name: Install AWS CLI

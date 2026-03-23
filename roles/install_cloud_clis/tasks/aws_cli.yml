@@ -1,4 +1,9 @@
 ---
+- name: aws_cli | Apply default install_cloud_clis_aws_install_root when not set by caller
+  ansible.builtin.set_fact:
+    install_cloud_clis_aws_install_root: "{{ ansible_facts['user_dir'] }}/.local/aws-cli"
+  when: install_cloud_clis_aws_install_root is not defined
+
 - name: aws_cli | Check if AWS CLI binary installed
   ansible.builtin.stat:
     path: "{{ install_cloud_clis_bin_dir }}/aws"
