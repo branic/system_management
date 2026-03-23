@@ -9,6 +9,6 @@ install_cloud_clis_components:
   - stern
   - helm
 
-install_cloud_clis_bin_dir: "{{ ansible_user_dir }}/.local/bin"
+install_cloud_clis_bin_dir: "{{ ansible_facts['user_dir'] }}/.local/bin"
 
-install_cloud_clis_aws_install_root: "{{ ansible_user_dir }}/.local/aws-cli"
+install_cloud_clis_aws_install_root: "{{ ansible_facts['user_dir'] }}/.local/aws-cli"

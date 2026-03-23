@@ -118,5 +118,5 @@
 
 - name: aws_cli | Add aws command-line completion to .bashrc
   ansible.builtin.lineinfile:
-    path: "{{ ansible_user_dir }}/.bashrc"
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
     line: complete -C '{{ install_cloud_clis_bin_dir }}/aws_completer' aws
