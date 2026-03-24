@@ -107,4 +107,5 @@
 - name: kube-linter | Add kube-linter command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    line: source <(kube-linter completion bash)
+    regexp: source <\(kube-linter completion bash\)
+    line: command -v kube-linter &>/dev/null && source <(kube-linter completion bash)

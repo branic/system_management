@@ -63,4 +63,5 @@
 - name: oc_cli | Add oc command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    line: source <(oc completion bash)
+    regexp: source <\(oc completion bash\)
+    line: command -v oc &>/dev/null && source <(oc completion bash)

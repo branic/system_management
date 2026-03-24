@@ -107,4 +107,5 @@
 - name: tekton_cli | Add Tekton command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    line: source <(tkn completion bash)
+    regexp: source <\(tkn completion bash\)
+    line: command -v tkn &>/dev/null && source <(tkn completion bash)
