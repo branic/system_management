@@ -37,7 +37,12 @@ See [`defaults/main.yml`](defaults/main.yml) (component list) and [`meta/argumen
 
 ## Dependencies
 
-None.
+The **collection** declares a dependency on **`community.general`** (see the collection [`galaxy.yml`](../../galaxy.yml)); Tekton CLI tasks use **`community.general.version_sort`** to pick the highest semantic version among GitHub GA releases.
+
+### Tekton CLI (`tkn`)
+
+- **Latest version** is the **highest semver** among **non-prerelease** GitHub releases returned in the first API page (`per_page=100`), not the release with the newest publish date. Tekton maintains parallel maintenance lines, so publish order and semver order can differ.
+- The role **installs or upgrades** only when the target is **strictly newer** than the installed client (no downgrades).
 
 ## Example playbook
 
