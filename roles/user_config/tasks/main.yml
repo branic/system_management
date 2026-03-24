@@ -10,6 +10,7 @@
 - name: Include DConf tasks
   ansible.builtin.include_tasks:
     file: dconf.yml
+  when: user_config_dconf_settings | length > 0
 
 - name: Include Flatpak tasks
   ansible.builtin.include_tasks:

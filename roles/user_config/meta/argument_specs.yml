@@ -48,6 +48,35 @@ argument_specs:
             required: false
             description: Optional display name for the bookmark.
 
+      user_config_dconf_settings:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - Dconf settings to apply via community.general.dconf.
+          - Values must be GVariant strings (e.g. "true", "false", "'hello'", "2").
+        options:
+          key:
+            type: str
+            required: true
+            description:
+              - The dconf key path (e.g. /org/gnome/software/download-updates).
+          value:
+            type: str
+            required: false
+            description:
+              - The GVariant value to set. Required when state is present, omitted when state is absent.
+          state:
+            type: str
+            required: false
+            default: present
+            choices:
+              - present
+              - absent
+            description:
+              - Whether the key should be present or absent.
+
       user_config_gnome_extensions:
         type: list
         elements: dict

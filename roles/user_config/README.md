@@ -30,6 +30,7 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `user_config_slack_flatpak_filesystems` | Extra filesystem entries for the Slack override (list of strings); if empty, the `filesystems` line is omitted. |
 | `user_config_gtk_include_default_bookmarks` | If `true` (default), prepend GNOME-style XDG default bookmarks (`Documents`, `Downloads`, etc.) before `user_config_gtk_bookmarks`. Set `false` to manage only your explicit list. |
 | `user_config_gtk_bookmarks` | List of `path` (required) and optional `name` for GTK 3 `~/.config/gtk-3.0/bookmarks`. Paths may be `file://`, absolute, `~`, `~/`, or relative to the user home. |
+| `user_config_dconf_settings` | Dconf settings to apply. List of dicts with `key` (required), `value` (GVariant string, required when state is `present`), and optional `state` (`present` or `absent`, default `present`). |
 | `user_config_gnome_extensions` | GNOME Shell extensions to install. Each entry is a **dict** with at least one of `url` (direct HTTPS URL to the extension zip), `id` (extensions.gnome.org pk), or `name` (exact catalog name to search). Precedence is `url`, then `id`, then `name`. Optional `force` (pass `-f` to `gnome-extensions install`), optional `enable` (default `true`: `gnome-extensions enable`, or `disable` when `false`). Requires `gnome-extensions` and `gnome-shell` on the target. Bundles are downloaded to a **temporary directory** that is removed when extension tasks finish. |
 
 ## Dependencies
