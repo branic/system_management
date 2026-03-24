@@ -1,9 +1,11 @@
 ---
 repos:
-  - repo: https://github.com/ansible-network/collection_prep
-    rev: 1.1.2
-    hooks:
-      - id: update-docs
+  # Commenting out until https://github.com/ansible-network/collection_prep/issues/94 is fixed.
+  # A PR is is open to fix the issue https://github.com/ansible-network/collection_prep/pull/96
+  # - repo: https://github.com/ansible-network/collection_prep
+  #   rev: 1.1.2
+  #   hooks:
+  #     - id: update-docs
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

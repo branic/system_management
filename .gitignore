@@ -172,3 +172,6 @@ ansible-navigator.yml
 # Ignore ansible config files
 ansible.cfg
 inventory.ini
+
+# Ignore collection development files
+collections/
