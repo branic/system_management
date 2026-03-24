@@ -1,16 +1,46 @@
 ---
 - name: tekton_cli | Retrieve Tekton CLI versions
   ansible.builtin.uri:
-    url: https://api.github.com/repos/tektoncd/cli/releases
+    url: https://api.github.com/repos/tektoncd/cli/releases?per_page=100
   register: __install_cloud_clis_tekton_cli_versions
+
+- name: tekton_cli | List GA releases with semver tag names
+  ansible.builtin.set_fact:
+    __install_cloud_clis_tekton_ga_releases: >-
+      {{ __install_cloud_clis_tekton_cli_versions.json
+         | selectattr('prerelease', 'equalto', false)
+         | selectattr('draft', 'equalto', false)
+         | selectattr('tag_name', 'match', '^v?([0-9.]+)$')
+         | list }}
+
+- name: tekton_cli | Determine highest semver among GA releases
+  ansible.builtin.set_fact:
+    __install_cloud_clis_tekton_highest_semver: >-
+      {{ (__install_cloud_clis_tekton_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^v', '')
+         | list
+         | community.general.version_sort
+         | last) }}
 
 - name: tekton_cli | Determine latest Tekton CLI GA release version details
   ansible.builtin.set_fact:
-    __install_cloud_clis_latest_tekton_cli_ver_details: "{{ __install_cloud_clis_tekton_cli_versions.json | selectattr('prerelease', 'equalto', false) | first }}"
+    __install_cloud_clis_latest_tekton_cli_ver_details: >-
+      {{ __install_cloud_clis_tekton_ga_releases
+         | selectattr('tag_name', 'equalto', 'v' ~ __install_cloud_clis_tekton_highest_semver)
+         | first }}
+
+- name: tekton_cli | Assert a matching GA Tekton CLI release was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_tekton_cli_ver_details is defined
+      - __install_cloud_clis_latest_tekton_cli_ver_details['tag_name'] is defined
+    fail_msg: >-
+      Could not resolve a GA Tekton CLI release for the highest semver (check API response and tag format).
 
 - name: tekton_cli | Determine latest Tekton CLI version
   ansible.builtin.set_fact:
-    __install_cloud_clis_latest_tekton_cli_ver: "{{ __install_cloud_clis_latest_tekton_cli_ver_details['tag_name'] | regex_replace('^v(?P<version>[0-9.]+)$', '\\g<version>') }}"
+    __install_cloud_clis_latest_tekton_cli_ver: "{{ __install_cloud_clis_latest_tekton_cli_ver_details['tag_name'] | regex_replace('^v', '') }}"
 
 - name: tekton_cli | Determine latest Tekton CLI download URL
   ansible.builtin.set_fact:
@@ -32,7 +62,7 @@
 
     - name: tekton_cli | Determine installed Tekton CLI version
       ansible.builtin.set_fact:
-        __install_cloud_clis_installed_tekton_cli_ver: "{{ __install_cloud_clis_tekton_ver_installed_result.stdout }}"
+        __install_cloud_clis_installed_tekton_cli_ver: "{{ __install_cloud_clis_tekton_ver_installed_result.stdout | trim }}"
 
 - name: tekton_cli | Display Tekton CLI version info
   ansible.builtin.debug:
@@ -45,7 +75,12 @@
     verbosity: 1
 
 - name: tekton_cli | Update Tekton CLI executable (Block)
-  when: (not __install_cloud_clis_tekton_cli_installed.stat.exists) or (__install_cloud_clis_installed_tekton_cli_ver != __install_cloud_clis_latest_tekton_cli_ver)
+  when: >-
+    (not __install_cloud_clis_tekton_cli_installed.stat.exists)
+    or (
+      __install_cloud_clis_installed_tekton_cli_ver is defined
+      and __install_cloud_clis_installed_tekton_cli_ver is version(__install_cloud_clis_latest_tekton_cli_ver, '<')
+    )
   block:
     - name: tekton_cli | Update Tekton CLI executable
       ansible.builtin.unarchive:
@@ -56,7 +91,9 @@
           - "tkn"
 
     - name: tekton_cli | Add updated message
-      when: (__install_cloud_clis_installed_tekton_cli_ver is defined) and (__install_cloud_clis_installed_tekton_cli_ver != __install_cloud_clis_latest_tekton_cli_ver)
+      when: >-
+        __install_cloud_clis_installed_tekton_cli_ver is defined
+        and __install_cloud_clis_installed_tekton_cli_ver is version(__install_cloud_clis_latest_tekton_cli_ver, '<')
       ansible.builtin.set_fact:
         install_cloud_clis_update_messages: >
           {{ install_cloud_clis_update_messages + ["Updated Tekton CLI from " + __install_cloud_clis_installed_tekton_cli_ver + " to " + __install_cloud_clis_latest_tekton_cli_ver] }}
