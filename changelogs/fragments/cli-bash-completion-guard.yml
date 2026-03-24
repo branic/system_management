@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - install_cloud_clis - guard bash completion lines in .bashrc with ``command -v`` so they are silently skipped when the CLI is not installed

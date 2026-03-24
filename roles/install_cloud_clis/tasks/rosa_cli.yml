@@ -102,4 +102,5 @@
 - name: rosa_cli | Add rosa command-line completion to .bashrc
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    line: source <(rosa completion bash)
+    regexp: source <\(rosa completion bash\)
+    line: command -v rosa &>/dev/null && source <(rosa completion bash)
