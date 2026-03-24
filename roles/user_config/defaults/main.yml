@@ -15,6 +15,10 @@ user_config_gtk_include_default_bookmarks: true
 # path: file:// URI, absolute path, ~ or ~/ (managed user's home), or path relative to that home.
 user_config_gtk_bookmarks: []
 
+# Dconf settings to apply. Each item: key (required), value (required unless state is absent), state (default present).
+# Values must be GVariant strings, e.g. "true", "false", "'hello'", "2".
+user_config_dconf_settings: []
+
 # GNOME Shell extensions (see README). Each item is a dict with at least one of id, name, url.
 # Resolution order: url (if set) else id (if set) else name. Optional: enable (default true), force.
 user_config_gnome_extensions: []
