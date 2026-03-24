@@ -10,7 +10,7 @@
       {{ __install_cloud_clis_tekton_cli_versions.json
          | selectattr('prerelease', 'equalto', false)
          | selectattr('draft', 'equalto', false)
-         | selectattr('tag_name', 'match', '^v?([0-9.]+)$')
+         | selectattr('tag_name', 'match', '^v([0-9.]+)$')
          | list }}
 
 - name: tekton_cli | Determine highest semver among GA releases

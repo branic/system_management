@@ -1,17 +1,42 @@
 ---
 - name: rosa_cli | Retrieve ROSA CLI releases from GitHub
   ansible.builtin.uri:
-    url: https://api.github.com/repos/openshift/rosa/releases
+    url: https://api.github.com/repos/openshift/rosa/releases?per_page=100
   register: __install_cloud_clis_rosa_cli_releases
+
+- name: rosa_cli | List GA releases with semver tag names
+  ansible.builtin.set_fact:
+    __install_cloud_clis_rosa_ga_releases: >-
+      {{ __install_cloud_clis_rosa_cli_releases.json
+         | selectattr('prerelease', 'equalto', false)
+         | selectattr('draft', 'equalto', false)
+         | selectattr('tag_name', 'match', '^v([0-9.]+)$')
+         | list }}
+
+- name: rosa_cli | Determine highest semver among GA releases
+  ansible.builtin.set_fact:
+    __install_cloud_clis_rosa_highest_semver: >-
+      {{ (__install_cloud_clis_rosa_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^v', '')
+         | list
+         | community.general.version_sort
+         | last) }}
 
 - name: rosa_cli | Determine latest ROSA GA release details
   ansible.builtin.set_fact:
     __install_cloud_clis_latest_rosa_cli_ver_details: >-
-      {{ __install_cloud_clis_rosa_cli_releases.json |
-         selectattr('prerelease', 'equalto', false) |
-         selectattr('draft', 'equalto', false) |
-         first
-      }}
+      {{ __install_cloud_clis_rosa_ga_releases
+         | selectattr('tag_name', 'equalto', 'v' ~ __install_cloud_clis_rosa_highest_semver)
+         | first }}
+
+- name: rosa_cli | Assert a matching GA ROSA CLI release was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_rosa_cli_ver_details is defined
+      - __install_cloud_clis_latest_rosa_cli_ver_details['tag_name'] is defined
+    fail_msg: >-
+      Could not resolve a GA ROSA CLI release for the highest semver (check API response and tag format).
 
 - name: rosa_cli | Determine latest ROSA CLI version
   ansible.builtin.set_fact:
