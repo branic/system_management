@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - install_cloud_clis - select helm, kustomize, ROSA, stern, and kube-linter GitHub releases by highest semver among GA releases

@@ -1,23 +1,48 @@
 ---
 - name: kustomize | Retrieve kustomize CLI versions
   ansible.builtin.uri:
-    url: https://api.github.com/repos/kubernetes-sigs/kustomize/releases
+    url: https://api.github.com/repos/kubernetes-sigs/kustomize/releases?per_page=100
   register: __install_cloud_clis_kustomize_cli_versions
+
+- name: kustomize | List GA releases with semver tag names
+  ansible.builtin.set_fact:
+    __install_cloud_clis_kustomize_ga_releases: >-
+      {{ __install_cloud_clis_kustomize_cli_versions.json
+         | selectattr('prerelease', 'equalto', false)
+         | selectattr('draft', 'equalto', false)
+         | selectattr('tag_name', 'match', '^kustomize/v([0-9.]+)$')
+         | list }}
+
+- name: kustomize | Determine highest semver among GA releases
+  ansible.builtin.set_fact:
+    __install_cloud_clis_kustomize_highest_semver: >-
+      {{ (__install_cloud_clis_kustomize_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^kustomize/v', '')
+         | list
+         | community.general.version_sort
+         | last) }}
 
 - name: kustomize | Determine latest kustomize GA release version details
   ansible.builtin.set_fact:
     __install_cloud_clis_latest_kustomize_cli_ver_details: >-
-      {{ __install_cloud_clis_kustomize_cli_versions.json |
-         selectattr('prerelease', 'equalto', false) |
-         selectattr('name', 'contains', 'kustomize') |
-         first
-      }}
+      {{ __install_cloud_clis_kustomize_ga_releases
+         | selectattr('tag_name', 'equalto', 'kustomize/v' ~ __install_cloud_clis_kustomize_highest_semver)
+         | first }}
+
+- name: kustomize | Assert a matching GA kustomize release was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_kustomize_cli_ver_details is defined
+      - __install_cloud_clis_latest_kustomize_cli_ver_details['tag_name'] is defined
+    fail_msg: >-
+      Could not resolve a GA kustomize release for the highest semver (check API response and tag format).
 
 - name: kustomize | Determine latest kustomize version
   ansible.builtin.set_fact:
     __install_cloud_clis_latest_kustomize_cli_ver: >-
       {{ __install_cloud_clis_latest_kustomize_cli_ver_details['tag_name'] |
-         regex_replace('^(.+)v(?P<version>[0-9.]+)$', '\g<version>')
+         regex_replace('^kustomize/v(?P<version>[0-9.]+)$', '\g<version>')
       }}
 
 - name: kustomize | Determine latest kustomize download URL
@@ -61,7 +86,12 @@
     verbosity: 1
 
 - name: kustomize | Update kustomize executable (Block)
-  when: (not __install_cloud_clis_kustomize_cli_installed.stat.exists) or (__install_cloud_clis_installed_kustomize_cli_ver != __install_cloud_clis_latest_kustomize_cli_ver)
+  when: >-
+    (not __install_cloud_clis_kustomize_cli_installed.stat.exists)
+    or (
+      __install_cloud_clis_installed_kustomize_cli_ver is defined
+      and __install_cloud_clis_installed_kustomize_cli_ver is version(__install_cloud_clis_latest_kustomize_cli_ver, '<')
+    )
   block:
     - name: kustomize | Update kustomize executable
       ansible.builtin.unarchive:
@@ -72,7 +102,9 @@
           - "kustomize"
 
     - name: kustomize | Add updated message
-      when: (__install_cloud_clis_installed_kustomize_cli_ver is defined) and (__install_cloud_clis_installed_kustomize_cli_ver != __install_cloud_clis_latest_kustomize_cli_ver)
+      when: >-
+        __install_cloud_clis_installed_kustomize_cli_ver is defined
+        and __install_cloud_clis_installed_kustomize_cli_ver is version(__install_cloud_clis_latest_kustomize_cli_ver, '<')
       ansible.builtin.set_fact:
         install_cloud_clis_update_messages: >
           {{ install_cloud_clis_update_messages + ["Updated kustomize from " + __install_cloud_clis_installed_kustomize_cli_ver + " to " + __install_cloud_clis_latest_kustomize_cli_ver] }}
