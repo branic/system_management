@@ -1,0 +1,57 @@
+---
+- name: RPM Fusion | Build release package list
+  ansible.builtin.set_fact:
+    __system_config_rpmfusion_release_packages: >-
+      {{
+        (['https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-'
+          ~ ansible_facts['distribution_major_version'] ~ '.noarch.rpm']
+         if system_config_rpmfusion in ['free', 'both'] else [])
+        + (['https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-'
+            ~ ansible_facts['distribution_major_version'] ~ '.noarch.rpm']
+           if system_config_rpmfusion in ['nonfree', 'both'] else [])
+      }}
+    __system_config_rpmfusion_appstream_packages: >-
+      {{
+        (['rpmfusion-free-appstream-data']
+         if system_config_rpmfusion in ['free', 'both'] else [])
+        + (['rpmfusion-nonfree-appstream-data']
+           if system_config_rpmfusion in ['nonfree', 'both'] else [])
+      }}
+    __system_config_rpmfusion_gpg_keys: >-
+      {{
+        (['/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-free-fedora-'
+          ~ ansible_facts['distribution_major_version']]
+         if system_config_rpmfusion in ['free', 'both'] else [])
+        + (['/usr/share/distribution-gpg-keys/rpmfusion/RPM-GPG-KEY-rpmfusion-nonfree-fedora-'
+            ~ ansible_facts['distribution_major_version']]
+           if system_config_rpmfusion in ['nonfree', 'both'] else [])
+      }}
+
+- name: RPM Fusion | Import GPG keys
+  ansible.builtin.rpm_key:
+    key: "{{ item }}"
+    state: present
+  loop: "{{ __system_config_rpmfusion_gpg_keys }}"
+  loop_control:
+    label: "{{ item | basename }}"
+
+- name: RPM Fusion | Install release packages
+  ansible.builtin.dnf5:
+    name: "{{ __system_config_rpmfusion_release_packages }}"
+    state: present
+
+- name: RPM Fusion | Install appstream metadata
+  ansible.builtin.dnf5:
+    name: "{{ __system_config_rpmfusion_appstream_packages }}"
+    state: present
+
+- name: RPM Fusion | Enable fedora-cisco-openh264 repository
+  community.general.ini_file:
+    path: /etc/dnf/repos.override.d/99-config_manager.repo
+    section: fedora-cisco-openh264
+    option: enabled
+    value: "1"
+    no_extra_spaces: true
+    mode: "0644"
+    owner: root
+    group: root

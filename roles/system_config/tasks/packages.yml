@@ -1,0 +1,29 @@
+---
+- name: Packages | Add DNF repositories
+  loop: "{{ system_config_dnf_repositories | default([]) }}"
+  loop_control:
+    label: "Configuring repository: {{ item.name }}"
+  ansible.builtin.yum_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl | default(omit) }}"
+    metalink: "{{ item.metalink | default(omit) }}"
+    gpgcheck: "{{ item.gpgcheck | default(omit) }}"
+    gpgkey: "{{ item.gpgkey | default(omit) }}"
+    repo_gpgcheck: "{{ item.repo_gpgcheck | default(omit) }}"
+    enabled: "{{ item.enabled | default(true) }}"
+    state: "{{ item.state | default('present') }}"
+
+- name: Packages | Enable COPR repositories
+  loop: "{{ system_config_copr_repositories | default([]) }}"
+  loop_control:
+    label: "Configuring COPR repository: {{ item.name }}"
+  community.general.copr:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('enabled') }}"
+
+- name: Packages | Install DNF packages
+  when: (system_config_packages | default([])) | length > 0
+  ansible.builtin.dnf5:
+    name: "{{ system_config_packages | default([]) }}"
+    state: present

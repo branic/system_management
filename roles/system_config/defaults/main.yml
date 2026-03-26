@@ -15,3 +15,27 @@
 #   - us.zoom.Zoom
 
 system_config_flatpak_packages: []
+
+# system_config_rpmfusion: none | free | nonfree | both
+system_config_rpmfusion: "none"
+
+# system_config_dnf_repositories:
+#   - name: example-repo
+#     description: Example Repository
+#     baseurl: https://example.com/repo/$releasever/$basearch
+#     gpgcheck: true
+#     gpgkey: https://example.com/RPM-GPG-KEY-example
+
+system_config_dnf_repositories: []
+
+# system_config_copr_repositories:
+#   - name: user/project
+
+system_config_copr_repositories: []
+
+# system_config_packages:
+#   - vim-enhanced
+#   - htop
+#   - tmux
+
+system_config_packages: []
