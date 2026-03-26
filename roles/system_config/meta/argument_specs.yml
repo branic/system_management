@@ -7,12 +7,98 @@ argument_specs:
     author:
       - Brant Evans
     options:
+      system_config_rpmfusion:
+        type: "str"
+        required: false
+        default: "none"
+        choices:
+          - "none"
+          - "free"
+          - "nonfree"
+          - "both"
+        description:
+          - "Enable RPM Fusion repositories on Fedora."
+          - "'free' enables the free repository, 'nonfree' enables the nonfree"
+          - "repository, 'both' enables both, and 'none' (default) skips setup."
       system_config_flatpak_packages:
         type: "list"
         elements: "str"
         required: false
         description:
           - Flatpak application IDs to install from configured remotes (e.g. Flathub).
+      system_config_dnf_repositories:
+        type: "list"
+        elements: "dict"
+        required: false
+        description: "A list of DNF repositories to configure on the target system."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "Unique repository ID used as the .repo filename and section header."
+          description:
+            type: "str"
+            required: true
+            description: "Human-readable name of the repository."
+          baseurl:
+            type: "str"
+            required: false
+            description: "URL to the directory where the repository repodata is located."
+          metalink:
+            type: "str"
+            required: false
+            description: "URL to a metalink file for the repository."
+          gpgcheck:
+            type: "bool"
+            required: false
+            description: "Whether to perform GPG signature checks on packages."
+          gpgkey:
+            type: "str"
+            required: false
+            description: "URL to the GPG key for the repository."
+          repo_gpgcheck:
+            type: "bool"
+            required: false
+            description: "Whether to perform GPG signature checks on the repository metadata."
+          enabled:
+            type: "bool"
+            required: false
+            default: true
+            description: "Whether the repository is enabled."
+          state:
+            type: "str"
+            required: false
+            default: "present"
+            choices:
+              - "present"
+              - "absent"
+            description: "Whether the repository file should exist."
+      system_config_copr_repositories:
+        type: "list"
+        elements: "dict"
+        required: false
+        description: "A list of Fedora COPR repositories to enable on the target system."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "COPR repository name in owner/project format (e.g. user/project)."
+          state:
+            type: "str"
+            required: false
+            default: "enabled"
+            choices:
+              - "enabled"
+              - "disabled"
+              - "absent"
+            description: "State of the COPR repository."
+      system_config_packages:
+        type: "list"
+        elements: "str"
+        required: false
+        description:
+          - "A list of packages to install via DNF."
+          - "The full list is passed to dnf5 in a single transaction."
       system_config_groups:
         type: "list"
         elements: "dict"

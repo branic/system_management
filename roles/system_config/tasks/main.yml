@@ -1,9 +1,24 @@
 ---
 # tasks file for system_config
 
+- name: Gather minimal facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - min
+
 - name: Include user and group tasks
   ansible.builtin.include_tasks:
     file: users_groups.yml
+
+- name: Include RPM Fusion repository tasks
+  when: system_config_rpmfusion != 'none'
+  ansible.builtin.include_tasks:
+    file: rpmfusion.yml
+
+- name: Include package and repository tasks
+  ansible.builtin.include_tasks:
+    file: packages.yml
 
 - name: Include Flatpak tasks
   ansible.builtin.include_tasks:
