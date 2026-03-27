@@ -1,0 +1,27 @@
+---
+- name: v4l2loopback | Install akmod-v4l2loopback
+  ansible.builtin.dnf5:
+    name: akmod-v4l2loopback
+    state: present
+
+- name: v4l2loopback | Load module at boot
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/v4l2loopback.conf
+    content: "v4l2loopback\n"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: v4l2loopback | Configure module options
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/v4l2loopback.conf
+    content: >
+      options v4l2loopback
+      devices={{ system_config_v4l2loopback_devices }}
+      video_nr={{ system_config_v4l2loopback_video_nr }}
+      card_label="{{ system_config_v4l2loopback_card_label }}"
+      max_buffers={{ system_config_v4l2loopback_max_buffers }}
+      exclusive_caps={{ system_config_v4l2loopback_exclusive_caps }}
+    owner: root
+    group: root
+    mode: "0644"
