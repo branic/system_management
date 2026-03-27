@@ -1,0 +1,35 @@
+---
+- name: akmods | Install akmods
+  ansible.builtin.dnf5:
+    name: akmods
+    state: present
+
+- name: akmods | Create private key directory
+  ansible.builtin.file:
+    path: /etc/pki/akmods/private
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: akmods | Create certificate directory
+  ansible.builtin.file:
+    path: /etc/pki/akmods/certs
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: akmods | Symlink private key to shared signing key
+  ansible.builtin.file:
+    src: /etc/pki/secureboot/private/secureboot_signing_key.priv
+    dest: /etc/pki/akmods/private/private_key.priv
+    state: link
+    force: true
+
+- name: akmods | Symlink certificate to shared signing certificate
+  ansible.builtin.file:
+    src: /etc/pki/secureboot/certs/secureboot_signing_cert.der
+    dest: /etc/pki/akmods/certs/public_key.der
+    state: link
+    force: true

@@ -1,0 +1,11 @@
+---
+# secureboot_signing_mok_password:
+#   Temporary password used during mokutil --import and again at the UEFI
+#   MOK Manager screen on the next reboot.  Must be vault-encrypted.
+#   No default -- required when the role runs.
+
+# Which module-building tools to configure for Secure Boot signing.
+# Supported values: akmods, dkms
+secureboot_signing_modules:
+  - akmods
+  - dkms

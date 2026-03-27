@@ -1,0 +1,113 @@
+---
+- name: Secure Boot | Check Secure Boot status
+  ansible.builtin.command:
+    cmd: mokutil --sb-state
+  register: __secureboot_signing_sb_state
+  changed_when: false
+  failed_when: false
+
+- name: Secure Boot | Skip when Secure Boot is disabled
+  when: "'SecureBoot enabled' not in __secureboot_signing_sb_state.stdout"
+  ansible.builtin.debug:
+    msg: >-
+      Secure Boot is not enabled on this system.
+      Skipping kernel module signing setup.
+
+- name: Secure Boot | Configure signing
+  when: "'SecureBoot enabled' in __secureboot_signing_sb_state.stdout"
+  block:
+    - name: Secure Boot | Validate MOK password length
+      ansible.builtin.assert:
+        that:
+          - secureboot_signing_mok_password | length >= 8
+          - secureboot_signing_mok_password | length <= 16
+        fail_msg: >-
+          secureboot_signing_mok_password must be between 8 and 16 characters.
+          This password is entered at the UEFI MOK Manager screen during enrollment.
+
+    - name: Secure Boot | Install prerequisites
+      ansible.builtin.dnf5:
+        name:
+          - mokutil
+          - openssl
+          - python3-pexpect
+        state: present
+
+    - name: Secure Boot | Create private key directory
+      ansible.builtin.file:
+        path: /etc/pki/secureboot/private
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Secure Boot | Create certificate directory
+      ansible.builtin.file:
+        path: /etc/pki/secureboot/certs
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Secure Boot | Generate shared signing keypair
+      ansible.builtin.command:
+        cmd: >-
+          openssl req -x509 -new -nodes -utf8 -sha256 -days 36500
+          -batch
+          -subj "/CN=Secure Boot Module Signing Key"
+          -outform DER
+          -out /etc/pki/secureboot/certs/secureboot_signing_cert.der
+          -keyout /etc/pki/secureboot/private/secureboot_signing_key.priv
+        creates: /etc/pki/secureboot/certs/secureboot_signing_cert.der
+
+    - name: Secure Boot | Set private key permissions
+      ansible.builtin.file:
+        path: /etc/pki/secureboot/private/secureboot_signing_key.priv
+        owner: root
+        group: root
+        mode: "0400"
+
+    - name: Secure Boot | Set certificate permissions
+      ansible.builtin.file:
+        path: /etc/pki/secureboot/certs/secureboot_signing_cert.der
+        owner: root
+        group: root
+        mode: "0444"
+
+    - name: Secure Boot | Check if key is already enrolled in MOK
+      ansible.builtin.command:
+        cmd: mokutil --test-key /etc/pki/secureboot/certs/secureboot_signing_cert.der
+      register: __secureboot_signing_mok_test
+      changed_when: false
+      failed_when: false
+
+    - name: Secure Boot | Import public key into MOK
+      when: "'is already enrolled' not in __secureboot_signing_mok_test.stdout"
+      ansible.builtin.expect:
+        command: mokutil --import /etc/pki/secureboot/certs/secureboot_signing_cert.der
+        responses:
+          "input password:": "{{ secureboot_signing_mok_password }}"
+          "input password again:": "{{ secureboot_signing_mok_password }}"
+      register: __secureboot_signing_mok_import
+      changed_when: __secureboot_signing_mok_import.rc == 0
+      failed_when: __secureboot_signing_mok_import.rc != 0
+
+    - name: Secure Boot | Include akmods signing tasks
+      when: "'akmods' in secureboot_signing_modules"
+      ansible.builtin.include_tasks:
+        file: akmods.yml
+
+    - name: Secure Boot | Include dkms signing tasks
+      when: "'dkms' in secureboot_signing_modules"
+      ansible.builtin.include_tasks:
+        file: dkms.yml
+
+    - name: Secure Boot | MOK enrollment reboot reminder
+      when: "'is already enrolled' not in __secureboot_signing_mok_test.stdout"
+      ansible.builtin.debug:
+        msg: >-
+          ACTION REQUIRED: The signing key has been staged for MOK enrollment.
+          You must reboot this system and complete enrollment in the UEFI
+          MOK Manager screen: Enroll MOK -> Continue -> Yes -> enter the
+          password you provided in secureboot_signing_mok_password.
+          This is a one-time operation.

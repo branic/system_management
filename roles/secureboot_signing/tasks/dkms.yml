@@ -1,0 +1,27 @@
+---
+- name: dkms | Install dkms
+  ansible.builtin.dnf5:
+    name: dkms
+    state: present
+
+- name: dkms | Ensure dkms directory exists
+  ansible.builtin.file:
+    path: /var/lib/dkms
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: dkms | Symlink private key to shared signing key
+  ansible.builtin.file:
+    src: /etc/pki/secureboot/private/secureboot_signing_key.priv
+    dest: /var/lib/dkms/mok.key
+    state: link
+    force: true
+
+- name: dkms | Symlink certificate to shared signing certificate
+  ansible.builtin.file:
+    src: /etc/pki/secureboot/certs/secureboot_signing_cert.der
+    dest: /var/lib/dkms/mok.pub
+    state: link
+    force: true
