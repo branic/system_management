@@ -1,0 +1,31 @@
+---
+argument_specs:
+  main:
+    short_description: Configure Secure Boot kernel module signing with a shared MOK keypair
+    description:
+      - Generates a shared x509 signing keypair, enrolls it as a Machine Owner
+        Key (MOK), and configures akmods and/or dkms to use the key for
+        automatic kernel module signing under Secure Boot.
+      - A one-time manual reboot is required after the first run to complete
+        MOK enrollment in the UEFI MOK Manager screen.
+    author:
+      - Brant Evans
+    options:
+      secureboot_signing_mok_password:
+        type: "str"
+        required: true
+        description:
+          - "Temporary password used during mokutil --import and again at the"
+          - "UEFI MOK Manager screen on the next reboot."
+          - "Must be between 8 and 16 characters."
+          - "Must be vault-encrypted in practice."
+      secureboot_signing_modules:
+        type: "list"
+        elements: "str"
+        required: false
+        default:
+          - "akmods"
+          - "dkms"
+        description:
+          - "Which module-building tools to configure for Secure Boot signing."
+          - "Supported values: akmods, dkms."
