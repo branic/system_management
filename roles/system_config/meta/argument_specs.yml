@@ -99,6 +99,46 @@ argument_specs:
         description:
           - "A list of packages to install via DNF."
           - "The full list is passed to dnf5 in a single transaction."
+      system_config_v4l2loopback:
+        type: "bool"
+        required: false
+        default: false
+        description:
+          - "Install and configure the v4l2loopback kernel module."
+          - "When true, installs akmod-v4l2loopback and configures the module"
+          - "to load at boot with a static video device number and label."
+      system_config_v4l2loopback_devices:
+        type: "int"
+        required: false
+        default: 1
+        description:
+          - "Number of v4l2loopback devices to create."
+      system_config_v4l2loopback_video_nr:
+        type: "int"
+        required: false
+        default: 20
+        description:
+          - "Video device number for the v4l2loopback virtual camera."
+          - "Creates /dev/videoN where N is this value."
+      system_config_v4l2loopback_card_label:
+        type: "str"
+        required: false
+        default: "VirtualCam"
+        description:
+          - "Label shown for the v4l2loopback virtual camera device."
+      system_config_v4l2loopback_max_buffers:
+        type: "int"
+        required: false
+        default: 2
+        description:
+          - "Maximum number of buffers for the v4l2loopback device."
+      system_config_v4l2loopback_exclusive_caps:
+        type: "int"
+        required: false
+        default: 1
+        description:
+          - "Whether to announce OUTPUT/CAPTURE capabilities exclusively."
+          - "Set to 1 so applications see the device as a capture-only camera."
       system_config_groups:
         type: "list"
         elements: "dict"

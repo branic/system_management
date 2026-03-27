@@ -23,3 +23,8 @@
 - name: Include Flatpak tasks
   ansible.builtin.include_tasks:
     file: flatpak.yml
+
+- name: Include v4l2loopback tasks
+  when: system_config_v4l2loopback | default(false)
+  ansible.builtin.include_tasks:
+    file: v4l2loopback.yml

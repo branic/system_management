@@ -39,3 +39,11 @@ system_config_copr_repositories: []
 #   - tmux
 
 system_config_packages: []
+
+# system_config_v4l2loopback: true
+system_config_v4l2loopback: false
+system_config_v4l2loopback_devices: 1
+system_config_v4l2loopback_video_nr: 20
+system_config_v4l2loopback_card_label: "VirtualCam"
+system_config_v4l2loopback_max_buffers: 2
+system_config_v4l2loopback_exclusive_caps: 1
