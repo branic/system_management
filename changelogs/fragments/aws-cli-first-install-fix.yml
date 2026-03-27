@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - install_cloud_clis - fix AWS CLI first-time install failure
