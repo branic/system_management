@@ -9,18 +9,18 @@
     path: "{{ install_cloud_clis_bin_dir }}/aws"
   register: __install_cloud_clis_aws_cli_installed
 
-- name: aws_cli | Check AWS CLI versions (Block)
+- name: aws_cli | Retrieve AWS CLI versions
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/aws/aws-cli/tags
+  register: __install_cloud_clis_aws_cli_versions
+
+- name: aws_cli | Determine latest AWS CLI version
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_aws_cli_ver: "{{ __install_cloud_clis_aws_cli_versions.json[0]['name'] }}"
+
+- name: aws_cli | Check installed AWS CLI version (Block)
   when: __install_cloud_clis_aws_cli_installed.stat.exists
   block:
-    - name: aws_cli | Retrieve AWS CLI versions
-      ansible.builtin.uri:
-        url: https://api.github.com/repos/aws/aws-cli/tags
-      register: __install_cloud_clis_aws_cli_versions
-
-    - name: aws_cli | Determine latest AWS CLI version
-      ansible.builtin.set_fact:
-        __install_cloud_clis_latest_aws_cli_ver: "{{ __install_cloud_clis_aws_cli_versions.json[0]['name'] }}"
-
     - name: aws_cli | Retrieve installed AWS CLI version
       ansible.builtin.command:
         cmd: aws --version
@@ -108,7 +108,7 @@
     recurse: false
     excludes:
       - "{{ __install_cloud_clis_latest_aws_cli_ver }}"
-      - "{{ __install_cloud_clis_installed_aws_cli_ver }}"
+      - "{{ __install_cloud_clis_installed_aws_cli_ver | default('') }}"
   register: __install_cloud_clis_aws_cli_vers_to_del_result
 
 - name: aws_cli | Remove old versions that were found
