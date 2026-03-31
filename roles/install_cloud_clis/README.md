@@ -79,7 +79,7 @@ When `install_cloud_clis_manage_bashrc_completion` is `true`, the role writes on
 
 The block uses **`if command -v …; then` / `fi`** stanzas and `# shellcheck source=/dev/null` before `source <(…)` completions, matching common interactive shell style. Only CLIs listed in `install_cloud_clis_components` are included, in the same order as installs in this role (`main.yml`).
 
-`blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file). Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
+`blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file) and sets **`mode: 0644`** on `.bashrc` when the module updates the file. Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
 
 If you set **`install_cloud_clis_manage_bashrc_completion: false`**, the role does not read or change `.bashrc`. Any block from an earlier run remains until you remove it manually.
 
