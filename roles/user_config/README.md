@@ -6,6 +6,7 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - Slack Flatpak overrides
 - GNOME DConf keys
 - GNOME Shell extensions
+- [uv](https://docs.astral.sh/uv/) Python package manager (standalone installer)
 
 ## Requirements
 
@@ -32,6 +33,9 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `user_config_gtk_bookmarks` | List of `path` (required) and optional `name` for GTK 3 `~/.config/gtk-3.0/bookmarks`. Paths may be `file://`, absolute, `~`, `~/`, or relative to the user home. |
 | `user_config_dconf_settings` | Dconf settings to apply. List of dicts with `key` (required), `value` (GVariant string, required when state is `present`), and optional `state` (`present` or `absent`, default `present`). |
 | `user_config_gnome_extensions` | GNOME Shell extensions to install. Each entry is a **dict** with at least one of `url` (direct HTTPS URL to the extension zip), `id` (extensions.gnome.org pk), or `name` (exact catalog name to search). Precedence is `url`, then `id`, then `name`. Optional `force` (pass `-f` to `gnome-extensions install`), optional `enable` (default `true`: `gnome-extensions enable`, or `disable` when `false`). Requires `gnome-extensions` and `gnome-shell` on the target. Bundles are downloaded to a **temporary directory** that is removed when extension tasks finish. |
+| `user_config_uv_install` | If `true`, install [uv](https://docs.astral.sh/uv/) via the standalone installer. Default `true`. |
+| `user_config_uv_version` | Pin a specific uv version (e.g. `"0.11.2"`). When empty (default), the latest version is installed. |
+| `user_config_uv_modify_path` | If `true`, allow the uv installer to modify shell profiles to add uv to `PATH`. Default `false`. |
 
 ## Dependencies
 

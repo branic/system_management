@@ -22,3 +22,12 @@ user_config_dconf_settings: []
 # GNOME Shell extensions (see README). Each item is a dict with at least one of id, name, url.
 # Resolution order: url (if set) else id (if set) else name. Optional: enable (default true), force.
 user_config_gnome_extensions: []
+
+# When true, install uv via the standalone installer.
+user_config_uv_install: true
+
+# Specific uv version to install (e.g. "0.11.2"). When empty, installs the latest version.
+user_config_uv_version: ""
+
+# When true, allow the uv installer to modify shell profiles to add uv to PATH.
+user_config_uv_modify_path: false

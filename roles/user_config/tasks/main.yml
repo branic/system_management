@@ -7,6 +7,11 @@
       - "!all"
       - min
 
+- name: Include uv tasks
+  ansible.builtin.include_tasks:
+    file: uv.yml
+  when: user_config_uv_install
+
 - name: Include DConf tasks
   ansible.builtin.include_tasks:
     file: dconf.yml
