@@ -77,6 +77,28 @@ argument_specs:
             description:
               - Whether the key should be present or absent.
 
+      user_config_uv_install:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, install uv via the standalone installer.
+
+      user_config_uv_version:
+        type: str
+        required: false
+        default: ""
+        description:
+          - Specific uv version to install (e.g. "0.11.2").
+          - When empty, installs the latest version.
+
+      user_config_uv_modify_path:
+        type: bool
+        required: false
+        default: false
+        description:
+          - When true, allow the uv installer to modify shell profiles to add uv to PATH.
+
       user_config_gnome_extensions:
         type: list
         elements: dict

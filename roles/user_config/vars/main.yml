@@ -8,3 +8,6 @@ __user_config_gtk_default_bookmarks:
   - path: "~/Music"
   - path: "~/Pictures"
   - path: "~/Videos"
+
+__user_config_uv_bin_path: "{{ ansible_facts['user_dir'] }}/.local/bin/uv"
+__user_config_uv_installer_base_url: "https://astral.sh/uv"

@@ -1,0 +1,50 @@
+---
+- name: uv | Check for existing uv binary
+  ansible.builtin.stat:
+    path: "{{ __user_config_uv_bin_path }}"
+  register: __user_config_uv_stat
+
+- name: uv | Get installed uv version
+  ansible.builtin.command:
+    cmd: "{{ __user_config_uv_bin_path }} --version"
+  register: __user_config_uv_current_version
+  changed_when: false
+  check_mode: false
+  when: __user_config_uv_stat.stat.exists
+
+- name: uv | Install uv via standalone installer
+  when: >-
+    not __user_config_uv_stat.stat.exists
+    or (user_config_uv_version | length > 0
+        and __user_config_uv_current_version.stdout | default('')
+            is not search(user_config_uv_version | regex_escape))
+  block:
+    - name: uv | Create temporary directory for installer
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: uv_install_
+      register: __user_config_uv_tmpdir
+
+    - name: uv | Download uv installer script
+      ansible.builtin.get_url:
+        url: >-
+          {{ __user_config_uv_installer_base_url ~ '/' ~
+             user_config_uv_version ~ '/install.sh'
+             if user_config_uv_version | length > 0
+             else __user_config_uv_installer_base_url ~ '/install.sh' }}
+        dest: "{{ __user_config_uv_tmpdir.path }}/install.sh"
+        mode: "0755"
+
+    - name: uv | Run uv installer
+      ansible.builtin.command:
+        cmd: "sh {{ __user_config_uv_tmpdir.path }}/install.sh"
+      environment:
+        UV_NO_MODIFY_PATH: "{{ '0' if user_config_uv_modify_path else '1' }}"
+      changed_when: true
+
+  always:
+    - name: uv | Remove temporary installer directory
+      ansible.builtin.file:
+        path: "{{ __user_config_uv_tmpdir.path }}"
+        state: absent
+      when: __user_config_uv_tmpdir.path is defined
