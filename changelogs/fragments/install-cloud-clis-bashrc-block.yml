@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - install_cloud_clis - manage bash completion in one ``.bashrc`` block
