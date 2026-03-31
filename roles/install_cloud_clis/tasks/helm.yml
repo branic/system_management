@@ -101,9 +101,3 @@
       ansible.builtin.set_fact:
         install_cloud_clis_update_messages: >
           {{ install_cloud_clis_update_messages + ["Installed helm"] }}
-
-- name: helm | Add helm command-line completion to .bashrc
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    regexp: source <\(helm completion bash\)
-    line: command -v helm &>/dev/null && source <(helm completion bash)

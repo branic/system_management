@@ -1,0 +1,28 @@
+---
+# lineinfile below: one-time migration from per-component one-line completion entries.
+- name: bashrc_completion | Remove legacy one-line bash completion entries from .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    regexp: "{{ __install_cloud_clis_item }}"
+    state: absent
+  loop:
+    - "^command -v aws &>/dev/null && complete -C .* aws$"
+    - '^command -v oc &>/dev/null && source <\(oc completion bash\)$'
+    - '^command -v rosa &>/dev/null && source <\(rosa completion bash\)$'
+    - '^command -v tkn &>/dev/null && source <\(tkn completion bash\)$'
+    - '^command -v kube-linter &>/dev/null && source <\(kube-linter completion bash\)$'
+    - '^command -v kustomize &>/dev/null && source <\(kustomize completion bash\)$'
+    - '^command -v stern &>/dev/null && source <\(stern --completion=bash\)$'
+    - '^command -v helm &>/dev/null && source <\(helm completion bash\)$'
+  loop_control:
+    loop_var: __install_cloud_clis_item
+    label: "{{ __install_cloud_clis_item }}"
+
+- name: bashrc_completion | Ensure managed bash completion block in .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis"
+    block: "{{ lookup('template', 'bashrc_cloud_cli_completion.j2') }}"
+    create: true
+    backup: true
+    mode: "0644"

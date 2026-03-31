@@ -1,0 +1,55 @@
+{{ ansible_managed | comment }}
+{% if 'aws' in install_cloud_clis_components %}
+if command -v aws &>/dev/null; then
+    complete -C '{{ install_cloud_clis_bin_dir }}/aws_completer' aws
+fi
+
+{% endif %}
+{% if 'oc' in install_cloud_clis_components %}
+if command -v oc &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(oc completion bash)
+fi
+
+{% endif %}
+{% if 'rosa' in install_cloud_clis_components %}
+if command -v rosa &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(rosa completion bash)
+fi
+
+{% endif %}
+{% if 'tekton' in install_cloud_clis_components %}
+if command -v tkn &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(tkn completion bash)
+fi
+
+{% endif %}
+{% if 'kube_linter' in install_cloud_clis_components %}
+if command -v kube-linter &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(kube-linter completion bash)
+fi
+
+{% endif %}
+{% if 'kustomize' in install_cloud_clis_components %}
+if command -v kustomize &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(kustomize completion bash)
+fi
+
+{% endif %}
+{% if 'stern' in install_cloud_clis_components %}
+if command -v stern &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(stern --completion=bash)
+fi
+
+{% endif %}
+{% if 'helm' in install_cloud_clis_components %}
+if command -v helm &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(helm completion bash)
+fi
+{% endif %}

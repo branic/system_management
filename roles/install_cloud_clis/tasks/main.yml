@@ -59,6 +59,11 @@
         file: helm.yml
 
   always:
+    - name: Refresh .bashrc completion block
+      when: install_cloud_clis_manage_bashrc_completion | bool
+      ansible.builtin.include_tasks:
+        file: bashrc_completion.yml
+
     - name: Display upgrade results
       ansible.builtin.debug:
         msg: "{{ (install_cloud_clis_update_messages | length > 0) | ternary(install_cloud_clis_update_messages, 'All CLIs are already at the latest version') }}"

@@ -33,6 +33,7 @@ See [`defaults/main.yml`](defaults/main.yml) (component list) and [`meta/argumen
 | `install_cloud_clis_components` | Subset of CLIs to install or update: `aws`, `oc`, `rosa`, `tekton`, `kube_linter`, `kustomize`, `stern`, `helm`. |
 | `install_cloud_clis_bin_dir` | Directory for symlinks/binaries. If omitted, set after **`setup`** to `{{ ansible_facts['user_dir'] }}/.local/bin`. |
 | `install_cloud_clis_aws_install_root` | AWS CLI `-i` install root. If omitted, set when AWS tasks run to `{{ ansible_facts['user_dir'] }}/.local/aws-cli`. |
+| `install_cloud_clis_manage_bashrc_completion` | When `true` (default), maintain a single Ansible `blockinfile` region in `~/.bashrc` for bash completion of selected CLIs. Set `false` to skip `.bashrc` edits entirely. |
 | `install_cloud_clis_update_messages` | List of human-readable update messages accumulated during the run; usually leave default `[]`. |
 
 ## Dependencies
@@ -69,6 +70,18 @@ Limit which CLIs are managed:
           - aws
           - helm
 ```
+
+## Bash completion and `.bashrc`
+
+When `install_cloud_clis_manage_bashrc_completion` is `true`, the role writes one contiguous block in **`{{ ansible_facts['user_dir'] }}/.bashrc`** between markers:
+
+`# BEGIN ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis` and `# END ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis`
+
+The block uses **`if command -v …; then` / `fi`** stanzas and `# shellcheck source=/dev/null` before `source <(…)` completions, matching common interactive shell style. Only CLIs listed in `install_cloud_clis_components` are included, in the same order as installs in this role (`main.yml`).
+
+`blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file). Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
+
+If you set **`install_cloud_clis_manage_bashrc_completion: false`**, the role does not read or change `.bashrc`. Any block from an earlier run remains until you remove it manually.
 
 ## Idempotency and check mode
 

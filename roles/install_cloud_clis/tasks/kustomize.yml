@@ -114,9 +114,3 @@
       ansible.builtin.set_fact:
         install_cloud_clis_update_messages: >
           {{ install_cloud_clis_update_messages + ["Installed kustomize"] }}
-
-- name: kustomize | Add kustomize command-line completion to .bashrc
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    regexp: source <\(kustomize completion bash\)
-    line: command -v kustomize &>/dev/null && source <(kustomize completion bash)
