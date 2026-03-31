@@ -98,9 +98,3 @@
       ansible.builtin.set_fact:
         install_cloud_clis_update_messages: >
           {{ install_cloud_clis_update_messages + ["Installed ROSA CLI"] }}
-
-- name: rosa_cli | Add rosa command-line completion to .bashrc
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    regexp: source <\(rosa completion bash\)
-    line: command -v rosa &>/dev/null && source <(rosa completion bash)

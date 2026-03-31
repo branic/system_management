@@ -120,9 +120,3 @@
   loop_control:
     loop_var: __install_cloud_clis_aws_cli_ver_to_del
     label: "Removing {{ __install_cloud_clis_aws_cli_ver_to_del['path'] }}"
-
-- name: aws_cli | Add aws command-line completion to .bashrc
-  ansible.builtin.lineinfile:
-    path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-    regexp: complete -C .* aws
-    line: command -v aws &>/dev/null && complete -C '{{ install_cloud_clis_bin_dir }}/aws_completer' aws

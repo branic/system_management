@@ -23,6 +23,14 @@ argument_specs:
         description:
           - Which CLIs to install or update. Allowed values are aws, oc, rosa, tekton, kube_linter, kustomize, stern, helm.
 
+      install_cloud_clis_manage_bashrc_completion:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, maintain a marked block in the connection user's .bashrc for bash completion of installed CLIs.
+          - When false, skip all .bashrc changes (Any existing managed block from a prior run is left in place).
+
       install_cloud_clis_bin_dir:
         type: str
         required: false
