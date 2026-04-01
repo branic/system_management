@@ -29,3 +29,8 @@
   ansible.builtin.include_tasks:
     file: gnome_extensions.yml
   when: user_config_gnome_extensions | length > 0
+
+- name: Include uv tool install tasks
+  ansible.builtin.include_tasks:
+    file: uv_tools.yml
+  when: user_config_uv_tools | length > 0

@@ -138,3 +138,13 @@ argument_specs:
             default: false
             description:
               - When true, pass -f to gnome-extensions install and reinstall even if the catalog version is not newer.
+
+      user_config_uv_tools:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - Python tools to install with uv tool install.
+          - Each item is a package specifier string (e.g. "ansible-core", "black").
+          - Requires uv to be available in PATH on the target.

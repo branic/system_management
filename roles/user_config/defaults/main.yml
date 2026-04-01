@@ -31,3 +31,6 @@ user_config_uv_version: ""
 
 # When true, allow the uv installer to modify shell profiles to add uv to PATH.
 user_config_uv_modify_path: false
+
+# Python tools to install with uv (e.g. ansible-core, black). Each item is a package specifier string.
+user_config_uv_tools: []
