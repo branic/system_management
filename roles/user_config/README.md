@@ -7,12 +7,14 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - GNOME DConf keys
 - GNOME Shell extensions
 - [uv](https://docs.astral.sh/uv/) Python package manager (standalone installer)
+- Python tool installation via uv
 
 ## Requirements
 
 - Ansible **2.16+** (see `meta/main.yml`).
 - Collection **community.general** (DConf, templates; Flatpak-related paths are file-based).
 - Target systems must provide **`gnome-extensions`** (typically from the `gnome-shell` package) for GNOME Shell extensions.
+- Target systems need **`uv`** for `user_config_uv_tools`; it is installed automatically when `user_config_uv_install` is `true` (default).
 - Target systems where these settings apply (typically **Fedora** with GNOME).
 
 ## Facts and connection
@@ -36,6 +38,7 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `user_config_uv_install` | If `true`, install [uv](https://docs.astral.sh/uv/) via the standalone installer. Default `true`. |
 | `user_config_uv_version` | Pin a specific uv version (e.g. `"0.11.2"`). When empty (default), the latest version is installed. |
 | `user_config_uv_modify_path` | If `true`, allow the uv installer to modify shell profiles to add uv to `PATH`. Default `false`. |
+| `user_config_uv_tools` | Python tools to install with `uv tool install`. List of package specifier strings (e.g. `"ansible-core"`, `"black"`). Requires `uv` on the target. Skipped when the list is empty. |
 
 ## Dependencies
 

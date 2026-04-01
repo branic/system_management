@@ -1,0 +1,30 @@
+---
+- name: uv_tools | Require uv command
+  ansible.builtin.command:
+    argv:
+      - command
+      - -v
+      - uv
+  register: __user_config_uv_check
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: uv_tools | Fail when uv is missing
+  ansible.builtin.fail:
+    msg: >-
+      The uv command is required but was not found in PATH.
+      Install uv (https://docs.astral.sh/uv/getting-started/installation/).
+  when: __user_config_uv_check.rc != 0
+
+- name: uv_tools | Install tools
+  ansible.builtin.command:
+    cmd: "uv tool install {{ item }}"
+  loop: "{{ user_config_uv_tools }}"
+  loop_control:
+    label: "{{ item }}"
+  register: __user_config_uv_install_result
+  changed_when: "'Installed' in __user_config_uv_install_result.stdout"
+  failed_when:
+    - __user_config_uv_install_result.rc != 0
+    - "'is already installed' not in __user_config_uv_install_result.stderr"
