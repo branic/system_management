@@ -1,0 +1,24 @@
+---
+# Install VS Code / Cursor extensions via each product's CLI. There is no
+# ansible.builtin module for extension lifecycle; command + parsed list state
+# provides idempotency (see code_extensions_for_editor.yml).
+
+- name: Include VS Code extension tasks
+  ansible.builtin.include_tasks:
+    file: code_extensions_for_editor.yml
+  when: user_config_vscode_extensions | length > 0
+  vars:
+    code_ext_editor_label: VS Code
+    code_ext_editor_argv0: code
+    code_ext_cli_override: "{{ user_config_vscode_cli }}"
+    code_ext_extensions: "{{ user_config_vscode_extensions }}"
+
+- name: Include Cursor extension tasks
+  ansible.builtin.include_tasks:
+    file: code_extensions_for_editor.yml
+  when: user_config_cursor_extensions | length > 0
+  vars:
+    code_ext_editor_label: Cursor
+    code_ext_editor_argv0: cursor
+    code_ext_cli_override: "{{ user_config_cursor_cli }}"
+    code_ext_extensions: "{{ user_config_cursor_extensions }}"

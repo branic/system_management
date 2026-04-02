@@ -1,0 +1,77 @@
+---
+# Shared implementation: one --list-extensions --show-versions per invocation,
+# parse to extension_id -> version, then install only when missing or wrong version.
+
+- name: Code_extensions | Set CLI binary from role variable override
+  ansible.builtin.set_fact:
+    __user_config_ce_bin: "{{ code_ext_cli_override }}"
+  when: code_ext_cli_override | length > 0
+
+- name: Code_extensions | Discover editor (Block)
+  when: code_ext_cli_override | length == 0
+  block:
+    - name: Code_extensions | Discover editor CLI on PATH
+      ansible.builtin.command:
+        argv:
+          - command
+          - -v
+          - "{{ code_ext_editor_argv0 }}"
+      register: __user_config_ce_which
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Code_extensions | Set CLI binary from PATH lookup
+      ansible.builtin.set_fact:
+        __user_config_ce_bin: "{{ __user_config_ce_which.stdout | trim }}"
+
+- name: Code_extensions | Fail when editor CLI is missing
+  ansible.builtin.fail:
+    msg: >-
+      The {{ code_ext_editor_argv0 }} command was required ({{ code_ext_editor_label }}) but was not found in PATH.
+      Install the application or set user_config_vscode_cli / user_config_cursor_cli to the full path to the binary.
+  when: __user_config_ce_bin | default('') | length == 0
+
+- name: Code_extensions | List installed extensions with versions
+  ansible.builtin.command:
+    argv:
+      - "{{ __user_config_ce_bin }}"
+      - --list-extensions
+      - --show-versions
+  register: __user_config_ce_list
+  changed_when: false
+  check_mode: false
+  failed_when: __user_config_ce_list.rc != 0
+
+- name: Code_extensions | Parse installed extension lines into id-to-version map
+  ansible.builtin.set_fact:
+    __user_config_ce_installed_map: "{{ __user_config_ce_installed_map | combine({__ce_line_parsed.id: __ce_line_parsed.ver}) }}"
+  vars:
+    __ce_line_parsed: "{{ __line | trim | regex_search('^(?P<id>.+)@(?P<ver>[^@]+)$') }}"
+  loop: "{{ __user_config_ce_list.stdout_lines | default([]) }}"
+  loop_control:
+    loop_var: __line
+  when:
+    - __line | trim | length > 0
+    - __ce_line_parsed is mapping
+
+- name: Code_extensions | Install extension
+  ansible.builtin.command:
+    argv:
+      - "{{ __user_config_ce_bin }}"
+      - --install-extension
+      - "{{ item }}"
+  loop: "{{ code_ext_extensions }}"
+  loop_control:
+    label: "{{ item }}"
+  vars:
+    __ce_parsed: "{{ item | trim | regex_search('^(?P<id>.+)@(?P<ver>[^@]+)$') }}"
+    __ce_item_id: "{{ __ce_parsed.id if __ce_parsed is mapping else item | trim }}"
+    __ce_want_ver: "{{ __ce_parsed.ver if __ce_parsed is mapping else '' }}"
+    __ce_have_ver: "{{ __user_config_ce_installed_map[__ce_item_id] | default('') }}"
+  when:
+    - not ansible_check_mode | bool
+    - >-
+      __ce_item_id not in __user_config_ce_installed_map
+      or (__ce_want_ver | length > 0 and __ce_have_ver != __ce_want_ver)
+  changed_when: true

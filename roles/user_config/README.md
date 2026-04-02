@@ -8,6 +8,7 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - GNOME Shell extensions
 - [uv](https://docs.astral.sh/uv/) Python package manager (standalone installer)
 - Python tool installation via uv
+- VS Code and Cursor editor extensions (via `code` / `cursor` CLI)
 
 ## Requirements
 
@@ -15,6 +16,7 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - Collection **community.general** (DConf, templates; Flatpak-related paths are file-based).
 - Target systems must provide **`gnome-extensions`** (typically from the `gnome-shell` package) for GNOME Shell extensions.
 - Target systems need **`uv`** for `user_config_uv_tools`; it is installed automatically when `user_config_uv_install` is `true` (default).
+- Target systems need the **`code`** and/or **`cursor`** executables on `PATH` when using `user_config_vscode_extensions` / `user_config_cursor_extensions` (or set `user_config_vscode_cli` / `user_config_cursor_cli`).
 - Target systems where these settings apply (typically **Fedora** with GNOME).
 
 ## Facts and connection
@@ -39,6 +41,10 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `user_config_uv_version` | Pin a specific uv version (e.g. `"0.11.2"`). When empty (default), the latest version is installed. |
 | `user_config_uv_modify_path` | If `true`, allow the uv installer to modify shell profiles to add uv to `PATH`. Default `false`. |
 | `user_config_uv_tools` | Python tools to install with `uv tool install`. List of package specifier strings (e.g. `"ansible-core"`, `"black"`). Requires `uv` on the target. Skipped when the list is empty. |
+| `user_config_vscode_extensions` | VS Code extensions to install. List of `publisher.extension` strings, or `publisher.extension@version` to pin. Uses `code --list-extensions --show-versions` once per run for idempotency; pinned versions must match the CLI output string exactly. Skipped when empty. |
+| `user_config_cursor_extensions` | Cursor extensions (same string format as VS Code). Uses the `cursor` CLI. Skipped when empty. |
+| `user_config_vscode_cli` | Optional full path to the `code` binary; when empty, `command -v code` is used. |
+| `user_config_cursor_cli` | Optional full path to the `cursor` binary; when empty, `command -v cursor` is used. |
 
 ## Dependencies
 
@@ -69,11 +75,15 @@ With variables:
           - path: "~/Documents"
             name: Documents
         user_config_slack_flatpak_sockets: true
+        user_config_vscode_extensions:
+          - redhat.ansible
 ```
 
 ## Idempotency and check mode
 
 Tasks use modules and templates where possible for idempotent behavior. Review community.general behavior for DConf and your environment if you rely on check mode.
+
+VS Code / Cursor extensions: the role lists installed extensions once per editor (`--list-extensions --show-versions`), installs only missing or wrong-version entries, and in check mode emits `changed` on `debug` tasks when an install would occur (install commands themselves are skipped).
 
 ## License
 

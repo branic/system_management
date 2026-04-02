@@ -148,3 +148,35 @@ argument_specs:
           - Python tools to install with uv tool install.
           - Each item is a package specifier string (e.g. "ansible-core", "black").
           - Requires uv to be available in PATH on the target.
+
+      user_config_vscode_extensions:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - Visual Studio Code extensions to install via the code CLI.
+          - Each item is publisher.extension (e.g. redhat.ansible) or publisher.extension@version to pin.
+          - Idempotency uses code --list-extensions --show-versions; pinned versions compare as exact strings.
+
+      user_config_cursor_extensions:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description:
+          - Cursor extensions to install via the cursor CLI (same specifier format as VS Code).
+
+      user_config_vscode_cli:
+        type: str
+        required: false
+        default: ""
+        description:
+          - Path to the code executable. When empty, the role uses command -v code.
+
+      user_config_cursor_cli:
+        type: str
+        required: false
+        default: ""
+        description:
+          - Path to the cursor executable. When empty, the role uses command -v cursor.

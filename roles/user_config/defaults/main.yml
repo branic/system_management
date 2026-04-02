@@ -34,3 +34,15 @@ user_config_uv_modify_path: false
 
 # Python tools to install with uv (e.g. ansible-core, black). Each item is a package specifier string.
 user_config_uv_tools: []
+
+# VS Code extensions (publisher.id or publisher.id@version to pin). Requires `code` on PATH unless user_config_vscode_cli is set.
+user_config_vscode_extensions: []
+
+# Cursor extensions (same specifier format as VS Code). Requires `cursor` on PATH unless user_config_cursor_cli is set.
+user_config_cursor_extensions: []
+
+# Full path to the VS Code `code` binary; empty uses `command -v code`.
+user_config_vscode_cli: ""
+
+# Full path to the Cursor `cursor` binary; empty uses `command -v cursor`.
+user_config_cursor_cli: ""
