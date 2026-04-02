@@ -34,3 +34,10 @@
   ansible.builtin.include_tasks:
     file: uv_tools.yml
   when: user_config_uv_tools | length > 0
+
+- name: Include VS Code / Cursor extension tasks
+  ansible.builtin.include_tasks:
+    file: code_extensions.yml
+  when: >-
+    (user_config_vscode_extensions | length > 0)
+    or (user_config_cursor_extensions | length > 0)
