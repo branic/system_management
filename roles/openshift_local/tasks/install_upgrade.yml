@@ -1,0 +1,66 @@
+---
+- name: install_upgrade | Install or update crc binary from Red Hat mirror
+  ansible.builtin.unarchive:
+    src: >-
+      {{ openshift_local_crc_download_base }}/crc-linux-{{ openshift_local_crc_linux_arch }}.tar.xz
+    dest: "{{ openshift_local_bin_dir }}"
+    remote_src: true
+    include:
+      - "*crc"
+    extra_opts:
+      - "--strip-components=1"
+
+- name: install_upgrade | Remove previous CRC VM
+  community.general.expect:
+    command: "{{ openshift_local_bin_dir }}/crc delete"
+    responses:
+      (?i)(.*)delete the instance(.*): "y"
+  register: openshift_local_crc_vm_deleted
+  changed_when: openshift_local_crc_vm_deleted.stdout is search("Deleted the instance", ignorecase=False)
+  failed_when: openshift_local_crc_vm_deleted.rc not in [0, 1]
+
+- name: install_upgrade | Run crc setup
+  ansible.builtin.command:
+    cmd: "{{ openshift_local_bin_dir }}/crc setup"
+  register: openshift_local_crc_setup
+  changed_when: >-
+    openshift_local_crc_setup.stderr is regex(
+    "Getting|Installing|Downloading|Uncompressing", multiline=true, ignorecase=true)
+
+- name: install_upgrade | Determine bundle version from crc setup output
+  ansible.builtin.set_fact:
+    openshift_local_bundle_version: >-
+      {{
+        openshift_local_crc_setup.stderr
+        | regex_replace('(?ms)^.*Checking .+/(crc_.+).crcbundle exists.*$', '\1')
+      }}
+
+- name: install_upgrade | Determine bundles cache path from crc setup output
+  ansible.builtin.set_fact:
+    openshift_local_bundles_path: >-
+      {{
+        openshift_local_crc_setup.stderr
+        | regex_replace('(?ms)^.*Checking if (/.+)/crc_.+.crcbundle exists.*$', '\1')
+      }}
+
+- name: install_upgrade | Prune stale crc bundle caches
+  when: >-
+    openshift_local_bundle_version is search('^crc_')
+    and openshift_local_bundles_path is search('^/')
+  block:
+    - name: install_upgrade | Find cached crc bundles
+      ansible.builtin.find:
+        paths:
+          - "{{ openshift_local_bundles_path }}"
+        file_type: any
+      register: openshift_local_crc_bundles
+
+    - name: install_upgrade | Remove stale crc bundles
+      ansible.builtin.file:
+        path: "{{ __openshift_local_bundle_item.path }}"
+        state: absent
+      loop: "{{ openshift_local_crc_bundles.files }}"
+      loop_control:
+        loop_var: __openshift_local_bundle_item
+        label: "{{ __openshift_local_bundle_item.path }}"
+      when: __openshift_local_bundle_item.path is not search(openshift_local_bundle_version)

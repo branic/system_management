@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - >-
+    Add ``openshift_local`` role to install or upgrade OpenShift Local (CRC), prune stale
+    bundle caches after ``crc setup``, and optionally manage crc bash completion in
+    ``~/.bashrc``.

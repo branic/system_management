@@ -1,0 +1,42 @@
+---
+argument_specs:
+  main:
+    short_description: Install or upgrade OpenShift Local (CRC) for the connection user
+    description:
+      - >-
+        Installs or upgrades the crc CLI from the Red Hat mirror, runs crc setup when the
+        binary is new or updated, optionally prunes stale bundle caches, and can maintain
+        bash completion in ~/.bashrc.
+    author:
+      - Brant Evans
+    options:
+      openshift_local_manage_bashrc_completion:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, maintain a marked block in the connection user's .bashrc for crc bash completion.
+          - When false, skip .bashrc changes.
+
+      openshift_local_bin_dir:
+        type: str
+        required: false
+        description:
+          - Directory for the crc binary (must be on PATH for interactive use).
+          - If unset, the role sets this after gathering facts to ansible_facts user_dir plus /.local/bin.
+
+      openshift_local_crc_github_releases_api:
+        type: str
+        required: false
+        default: https://api.github.com/repos/crc-org/crc/releases?per_page=1
+        description:
+          - GitHub API URL used to read the latest CRC release tag for version comparison.
+
+      openshift_local_crc_download_base:
+        type: str
+        required: false
+        default: >-
+          https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest
+        description:
+          - Base URL for the crc Linux archive (without trailing slash or archive name).
+          - Defaults to the Red Hat developers mirror "latest" directory.

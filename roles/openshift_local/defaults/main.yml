@@ -1,0 +1,9 @@
+---
+openshift_local_manage_bashrc_completion: true
+
+# GitHub API: first page item is the newest release by publish date.
+openshift_local_crc_github_releases_api: https://api.github.com/repos/crc-org/crc/releases?per_page=1
+
+# Red Hat mirror base URL; archive name is crc-linux-<arch>.tar.xz under "latest".
+openshift_local_crc_download_base: >-
+  https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest
