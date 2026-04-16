@@ -1,9 +1,9 @@
 ---
 openshift_local_manage_bashrc_completion: true
 
-# GitHub API: first page item is the newest release by publish date.
-openshift_local_crc_github_releases_api: https://api.github.com/repos/crc-org/crc/releases?per_page=1
+# Desired crc config keys and values (see https://crc.dev/docs/configuring/). Empty means the
+# role does not enforce crc settings beyond internal preset default used for validation.
+openshift_local_crc_config: {}
 
-# Red Hat mirror base URL; archive name is crc-linux-<arch>.tar.xz under "latest".
-openshift_local_crc_download_base: >-
-  https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest
+# When true on Red Hat family hosts, install required RPMs from role vars with privilege escalation.
+openshift_local_install_host_packages: false

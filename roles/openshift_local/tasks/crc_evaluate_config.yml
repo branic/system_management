@@ -1,0 +1,74 @@
+---
+- name: crc_evaluate_config | Read current values with crc config get for each desired key
+  when: __openshift_local_crc_cli_stat.stat.exists
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_local_bin_dir }}/crc"
+      - config
+      - get
+      - "{{ item }}"
+  loop: "{{ __openshift_local_effective_crc_config.keys() | list }}"
+  register: __openshift_local_crc_config_get
+  changed_when: false
+  failed_when: false
+
+- name: crc_evaluate_config | Parse crc config get results into a dictionary
+  when: __openshift_local_crc_cli_stat.stat.exists
+  ansible.builtin.set_fact:
+    __openshift_local_crc_config_current: >-
+      {{
+        __openshift_local_crc_config_current | default({})
+        | combine({
+            item.item: (
+              (
+                item.stdout
+                | default('', true)
+                | regex_replace('(?ms)^[^:]+:\s*(.*)\s*$', '\1')
+                | trim
+              )
+              if (item.rc | int) == 0
+              else (
+                (
+                  (
+                    item.stderr
+                    | default('', true)
+                    | regex_findall("Default value is '([^']*)'")
+                  )
+                  + ['']
+                )
+                | first
+                | trim
+              )
+            )
+          })
+      }}
+  loop: "{{ __openshift_local_crc_config_get.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: crc_evaluate_config | No current crc config when binary is missing
+  when: not __openshift_local_crc_cli_stat.stat.exists
+  ansible.builtin.set_fact:
+    __openshift_local_crc_config_current: {}
+
+- name: crc_evaluate_config | List crc config keys that differ from desired state
+  ansible.builtin.set_fact:
+    __openshift_local_crc_config_keys_to_apply: >-
+      {{
+        __openshift_local_crc_config_keys_to_apply | default([])
+        + [{'key': item, 'value': __openshift_local_effective_crc_config[item]}]
+      }}
+  when: >-
+    (not __openshift_local_crc_cli_stat.stat.exists)
+    or (
+      (
+        __openshift_local_effective_crc_config[item] | string | trim
+      )
+      !=
+      (
+        __openshift_local_crc_config_current[item] | default('', true) | string | trim
+      )
+    )
+  loop: "{{ __openshift_local_effective_crc_config.keys() | list }}"
+  loop_control:
+    label: "{{ item }}"
