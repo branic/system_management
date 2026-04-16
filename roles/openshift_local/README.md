@@ -1,4 +1,4 @@
-# openshift_local
+# branic.system_management.openshift_local
 
 Installs or upgrades **OpenShift Local** (the `crc` CLI) for the **user that runs this role** (the SSH connection user, or **`become_user`** when the role runs with privilege escalation).
 
@@ -9,6 +9,8 @@ See [Configuring CRC](https://crc.dev/docs/configuring/) for upstream property n
 ## Requirements
 
 - Ansible **2.16+** (see [`meta/main.yml`](meta/main.yml)).
+- This role uses **`ansible.builtin`** modules only; it does not add Python library requirements beyond what your Ansible install already provides.
+- The **system_management** collection may list other collection dependencies in **`galaxy.yml`** for the collection as a whole; nothing beyond **`ansible.builtin`** is required specifically to run this role.
 - Outbound **HTTPS** to GitHub and Red Hat mirror endpoints.
 - Target **Linux** on **x86_64** or **aarch64** (archive names `crc-linux-amd64.tar.xz` and `crc-linux-arm64.tar.xz`).
 - With the default **`openshift_local_crc_setup_temporary_sudo`**, the play (or role) must allow **privilege escalation** (**`become`**) so Ansible can create and delete the temporary **`sudoers.d`** fragment before and after **`crc setup`**. Not required when that variable is **`false`** and you do not rely on other role tasks that need **`become`** (for example **`openshift_local_install_host_packages`**).
@@ -16,14 +18,14 @@ See [Configuring CRC](https://crc.dev/docs/configuring/) for upstream property n
 ## Facts and connection
 
 - The role runs **`ansible.builtin.setup`** with subsets **`!all`**, **`min`**, **`hardware`**, and **`virtual`** so host CPU, memory, and disk checks work and **`ansible_facts['user_dir']`** matches the effective user (including **`become_user`**).
-- Default **`openshift_local_bin_dir`** is **`{{ ansible_facts['user_dir'] }}/.local/bin`** when unset.
+- **`openshift_local_bin_dir`** defaults to **`~/.local/bin`**. Set it to install the binary elsewhere.
 
 ## Host prerequisites and resources
 
 - **Fedora / RHEL family:** The role always checks the required RPM list in [`vars/main.yml`](vars/main.yml). If **`openshift_local_install_host_packages`** is `true`, it runs **`dnf`** with **`state: present`** (idempotent, so already-installed packages are left alone). It then **refreshes package facts** and **asserts** every required package is present—so verification always reflects the system after any install, and the install path cannot pass while facts still show missing packages.
 - **Other OS families:** Package tasks are skipped (optional debug at verbosity 1).
 - **All targets:** The role **fails** if the host does not meet **preset-based** CPU, RAM, and free disk minimums (see [`vars/main.yml`](vars/main.yml) and [CRC system requirements](https://crc.dev/docs/using/)). The effective preset defaults to **`openshift`** when **`openshift_local_crc_config.preset`** is unset.
-- If **`openshift_local_crc_config`** sets **`cpus`**, **`memory`**, or **`disk-size`**, those values must be **greater than or equal to** the CRC-documented minimums for the selected preset (same tables in [`vars/main.yml`](vars/main.yml)). Free space on the filesystem that contains **`user_dir`** (from **`df`**) must be at least the **maximum** of the preset’s host disk minimum and any configured **`disk-size`** (GiB).
+- If **`openshift_local_crc_config`** sets **`cpus`**, **`memory`**, or **`disk-size`**, those values must be **greater than or equal to** the CRC-documented minimums for the selected preset (same tables in [`vars/main.yml`](vars/main.yml)). Free space on the filesystem that contains **`user_dir`** (from **`df`**) must be at least the **maximum** of the preset's host disk minimum and any configured **`disk-size`** (GiB).
 
 ## CRC configuration (single dictionary)
 
@@ -53,14 +55,14 @@ When the binary is current **and** configuration matches, the role skips unarchi
 
 See [`defaults/main.yml`](defaults/main.yml) and [`meta/argument_specs.yml`](meta/argument_specs.yml).
 
-| Variable | Description |
-| --- | --- |
-| `openshift_local_bin_dir` | Directory for the `crc` binary. Default: `~/.local/bin` after setup. |
-| `openshift_local_crc_config` | Dict of desired `crc config` keys and values (default `{}`). |
-| `openshift_local_install_host_packages` | When `false` (default): only verify required host packages are installed. When `true`, install them if needed (requires privilege escalation). Only Fedora/RHEL supported. |
-| `openshift_local_crc_setup_temporary_sudo` | When `true` (default), before **`crc setup`** the role writes a validated temporary **`sudoers.d`** file granting the connection user passwordless **`sudo`**, then deletes it afterward. Requires privilege escalation for those tasks. Use `false` if passwordless **`sudo`** is already configured. |
-| `openshift_local_crc_setup_sudoers_path` | Optional absolute path for that temporary file. If unset, defaults to **`/etc/sudoers.d/99-crc-setup-<connection username>`**. |
-| `openshift_local_manage_bashrc_completion` | When `true` (default), maintain `crc` tab completion in the connection user’s `~/.bashrc`. |
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `openshift_local_bin_dir` | No | `~/.local/bin` | Directory for the `crc` binary. |
+| `openshift_local_crc_config` | No | `{}` | Dict of desired `crc config` keys and values. |
+| `openshift_local_install_host_packages` | No | `false` | When `false`, only verify required host packages are installed. When `true`, install them if needed (requires privilege escalation). Only Fedora/RHEL supported. |
+| `openshift_local_crc_setup_temporary_sudo` | No | `true` | When `true`, before **`crc setup`** the role writes a validated temporary **`sudoers.d`** file granting the connection user passwordless **`sudo`**, then deletes it afterward. Requires privilege escalation for those tasks. Use `false` if passwordless **`sudo`** is already configured. |
+| `openshift_local_crc_setup_sudoers_path` | No | unset | Optional absolute path for that temporary file. If unset, defaults to **`/etc/sudoers.d/99-crc-setup-<connection username>`**. |
+| `openshift_local_manage_bashrc_completion` | No | `true` | When `true`, maintain `crc` tab completion in the connection user's `~/.bashrc`. |
 
 ## Example playbook
 
