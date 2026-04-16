@@ -11,6 +11,7 @@ See [Configuring CRC](https://crc.dev/docs/configuring/) for upstream property n
 - Ansible **2.16+** (see [`meta/main.yml`](meta/main.yml)).
 - Outbound **HTTPS** to GitHub and Red Hat mirror endpoints.
 - Target **Linux** on **x86_64** or **aarch64** (archive names `crc-linux-amd64.tar.xz` and `crc-linux-arm64.tar.xz`).
+- With the default **`openshift_local_crc_setup_temporary_sudo`**, the play (or role) must allow **privilege escalation** (**`become`**) so Ansible can create and delete the temporary **`sudoers.d`** fragment before and after **`crc setup`**. Not required when that variable is **`false`** and you do not rely on other role tasks that need **`become`** (for example **`openshift_local_install_host_packages`**).
 
 ## Facts and connection
 
@@ -42,8 +43,9 @@ When reconcile is required, the role:
 1. **Unarchives** the binary only if it is missing or outdated.
 2. Runs **`crc delete --force`** (benign exit codes when no instance exists are allowed).
 3. Applies **`crc config set`** for keys that still need to change.
-4. Runs **`crc setup`**.
-5. Prunes stale bundle caches (same heuristics as before).
+4. When **`openshift_local_crc_setup_temporary_sudo`** is **`true`** (default), installs a temporary **`/etc/sudoers.d`** fragment (validated with **`visudo`**) so the connection user can run **`sudo`** without a password during **`crc setup`**, then removes that file afterward (even if **`crc setup`** fails). Those two tasks use privilege escalation (**`become`**). Set **`openshift_local_crc_setup_temporary_sudo`** to **`false`** if the user already has passwordless **`sudo`** or you manage **`sudoers`** elsewhere. Override the path with **`openshift_local_crc_setup_sudoers_path`** if needed (default: **`/etc/sudoers.d/99-crc-setup-<username>`**).
+5. Runs **`crc setup`** (as the connection user; **`crc`** invokes **`sudo`** internally where required).
+6. Prunes stale bundle caches (same heuristics as before).
 
 When the binary is current **and** configuration matches, the role skips unarchive, delete, `crc config set`, and **`crc setup`**.
 
@@ -56,6 +58,8 @@ See [`defaults/main.yml`](defaults/main.yml) and [`meta/argument_specs.yml`](met
 | `openshift_local_bin_dir` | Directory for the `crc` binary. Default: `~/.local/bin` after setup. |
 | `openshift_local_crc_config` | Dict of desired `crc config` keys and values (default `{}`). |
 | `openshift_local_install_host_packages` | When `false` (default): only verify required host packages are installed. When `true`, install them if needed (requires privilege escalation). Only Fedora/RHEL supported. |
+| `openshift_local_crc_setup_temporary_sudo` | When `true` (default), before **`crc setup`** the role writes a validated temporary **`sudoers.d`** file granting the connection user passwordless **`sudo`**, then deletes it afterward. Requires privilege escalation for those tasks. Use `false` if passwordless **`sudo`** is already configured. |
+| `openshift_local_crc_setup_sudoers_path` | Optional absolute path for that temporary file. If unset, defaults to **`/etc/sudoers.d/99-crc-setup-<connection username>`**. |
 | `openshift_local_manage_bashrc_completion` | When `true` (default), maintain `crc` tab completion in the connection user’s `~/.bashrc`. |
 
 ## Example playbook

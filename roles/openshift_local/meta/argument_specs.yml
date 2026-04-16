@@ -52,3 +52,24 @@ argument_specs:
           - >-
             After any optional install, the role refreshes package facts and asserts every required
             package is present. When false, only the fact refresh and assert run.
+
+      openshift_local_crc_setup_temporary_sudo:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            When true, before ``crc setup`` the role installs a temporary ``/etc/sudoers.d`` file
+            granting the connection user passwordless sudo, validates it with ``visudo``, then
+            removes the file afterward (even if ``crc setup`` fails). Requires privilege escalation
+            for those two tasks.
+          - Set to false if the user already has passwordless sudo or you manage sudoers elsewhere.
+
+      openshift_local_crc_setup_sudoers_path:
+        type: str
+        required: false
+        description:
+          - >-
+            Absolute path for the temporary sudoers fragment when
+            ``openshift_local_crc_setup_temporary_sudo`` is true.
+          - If omitted, defaults to ``/etc/sudoers.d/99-crc-setup-<connection username>``.

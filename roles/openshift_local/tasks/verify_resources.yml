@@ -16,7 +16,7 @@
 
 - name: verify_resources | Free disk space (GiB) on filesystem containing user home
   ansible.builtin.command:
-    cmd: df -BG --output=avail -P {{ ansible_facts['user_dir'] | quote }}
+    cmd: df -BG --output=avail {{ ansible_facts['user_dir'] | quote }}
   register: __openshift_local_df_user_dir
   changed_when: false
 

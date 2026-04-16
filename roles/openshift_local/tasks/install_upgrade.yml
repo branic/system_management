@@ -38,26 +38,60 @@
   loop: "{{ __openshift_local_crc_config_keys_to_apply | default([]) }}"
   register: __openshift_local_crc_config_apply
   changed_when: >-
-    __openshift_local_crc_config_apply.results
-    | map(attribute='rc')
-    | select('equalto', 0)
-    | list
-    | length > 0
+    (
+      __openshift_local_crc_config_apply.results
+      | default([__openshift_local_crc_config_apply])
+      | selectattr('rc', 'equalto', 0)
+      | list
+      | length > 0
+    )
   failed_when: >-
-    __openshift_local_crc_config_apply.results
-    | rejectattr('rc', 'equalto', 0)
-    | list
-    | length > 0
+    (
+      __openshift_local_crc_config_apply.results
+      | default([__openshift_local_crc_config_apply])
+      | rejectattr('rc', 'equalto', 0)
+      | list
+      | length > 0
+    )
   loop_control:
     label: "{{ item['key'] }}"
 
-- name: install_upgrade | Run crc setup
-  ansible.builtin.command:
-    cmd: "{{ openshift_local_bin_dir }}/crc setup"
-  register: __openshift_local_crc_setup
-  changed_when: >-
-    __openshift_local_crc_setup.stderr is regex(
-    "Getting|Installing|Downloading|Uncompressing", multiline=true, ignorecase=true)
+- name: install_upgrade | Set path for temporary crc-setup sudoers fragment
+  ansible.builtin.set_fact:
+    __openshift_local_crc_setup_sudoers_path: >-
+      {{
+        openshift_local_crc_setup_sudoers_path
+        | default('/etc/sudoers.d/99-crc-setup-' ~ ansible_facts['user_id'], true)
+      }}
+
+- name: install_upgrade | Run crc setup (optional temporary NOPASSWD sudo)
+  block:
+    - name: install_upgrade | Install temporary sudoers for crc setup
+      when: openshift_local_crc_setup_temporary_sudo | default(true) | bool
+      ansible.builtin.copy:
+        dest: "{{ __openshift_local_crc_setup_sudoers_path }}"
+        content: "{{ ansible_facts['user_id'] }} ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
+      become: true
+
+    - name: install_upgrade | Run crc setup
+      ansible.builtin.command:
+        cmd: "{{ openshift_local_bin_dir }}/crc setup"
+      register: __openshift_local_crc_setup
+      changed_when: >-
+        __openshift_local_crc_setup.stderr is regex(
+        "Getting|Installing|Downloading|Uncompressing", multiline=true, ignorecase=true)
+
+  always:
+    - name: install_upgrade | Remove temporary sudoers for crc setup
+      when: openshift_local_crc_setup_temporary_sudo | default(true) | bool
+      ansible.builtin.file:
+        path: "{{ __openshift_local_crc_setup_sudoers_path }}"
+        state: absent
+      become: true
 
 - name: install_upgrade | Determine bundle version from crc setup output
   ansible.builtin.set_fact:

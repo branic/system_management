@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - >-
+    ``openshift_local`` — optional temporary passwordless sudo for ``crc setup`` via a validated
+    ``/etc/sudoers.d`` file that is removed afterward (``openshift_local_crc_setup_temporary_sudo``).
