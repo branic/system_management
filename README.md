@@ -2,6 +2,8 @@
 
 This repository contains the `branic.system_management` Ansible Collection.
 
+Fedora Linux system configuration and management.
+
 <!--start requires_ansible-->
 ## Ansible version compatibility
 
@@ -18,17 +20,27 @@ PEP440 is the schema used to describe the versions of Ansible.
 
 Some modules and plugins require external libraries. Please check the requirements for each plugin or module you use in the documentation to find out which requirements are needed.
 
+When you install this collection with Ansible Galaxy, declared dependencies are installed as well. This collection depends on **`community.general` >=8.0.0** (see `galaxy.yml`).
+
 ## Included content
 
 <!--start collection content-->
 
 ### Roles
 
-| Role                                                       | Summary                                            |
-| ---------------------------------------------------------- | -------------------------------------------------- |
-| [`user_config`](roles/user_config/README.md)               | Per-user settings and environment setup.           |
-| [`system_config`](roles/system_config/README.md)           | System settings and environment setup.             |
-| [`install_cloud_clis`](roles/install_cloud_clis/README.md) | Cloud and Kubernetes CLIs for the connection user. |
+| Role                                                       | Summary                                                          |
+| ---------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`user_config`](roles/user_config/README.md)               | Per-user settings and environment setup.                         |
+| [`system_config`](roles/system_config/README.md)           | System settings and environment setup.                           |
+| [`install_cloud_clis`](roles/install_cloud_clis/README.md) | Cloud and Kubernetes CLIs for the connection user.               |
+| [`openshift_local`](roles/openshift_local/README.md)       | Install or upgrade OpenShift Local (`crc`) for the target user.  |
+| [`secureboot_signing`](roles/secureboot_signing/README.md) | Secure Boot kernel module signing (MOK, akmods, dkms) on Fedora. |
+
+### Filter plugins
+
+| Filter                                              | Summary                                                                                                   |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`to_gnome_clocks`](plugins/filter/gnome_clocks.py) | Build GNOME world-clock GVariant strings from location data (`branic.system_management.to_gnome_clocks`). |
 
 <!--end collection content-->
 
@@ -63,14 +75,10 @@ See [Ansible Using collections](https://docs.ansible.com/ansible/latest/user_gui
 
 See the [changelog](https://github.com/branic/system_management/tree/main/CHANGELOG.rst).
 
-## Roadmap
-
-<!-- Optional. Include the roadmap for this collection, and the proposed release/versioning strategy so users can anticipate the upgrade/update cycle. -->
-
 ## More information
 
-<!-- List out where the user can find additional information, such as working group meeting times, slack/IRC channels, or documentation for the product this collection automates. At a minimum, link to: -->
-
+- [Source repository](https://github.com/branic/system_management)
+- [Issue tracker](https://github.com/branic/system_management/issues)
 - [Ansible Collection overview](https://github.com/ansible-collections/overview)
 - [Ansible User guide](https://docs.ansible.com/ansible/devel/user_guide/index.html)
 - [Ansible Developer guide](https://docs.ansible.com/ansible/devel/dev_guide/index.html)

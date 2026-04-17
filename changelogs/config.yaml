@@ -1,6 +1,4 @@
 ---
-changelog_filename_template: ../CHANGELOG.rst
-changelog_filename_version_depth: 0
 output:
   - file: ../CHANGELOG.rst
     filename_version_depth: 0
