@@ -1,3 +1,0 @@
----
-bugfixes:
-  - install_cloud_clis - select Tekton CLI GitHub release by highest semver among GA releases

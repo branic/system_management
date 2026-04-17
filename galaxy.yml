@@ -33,6 +33,7 @@ build_ignore:
   - .github
   - .gitignore
   - .isort.cfg
+  - .markdownlint-cli2.jsonc
   - .markdownlint.yml
   - .pre-commit-config.yaml
   - .prettierignore

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - add ``to_gnome_clocks`` filter plugin for generating GNOME world clock GVariant strings

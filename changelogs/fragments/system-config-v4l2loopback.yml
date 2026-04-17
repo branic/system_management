@@ -1,3 +1,0 @@
----
-minor_changes:
-  - system_config - Add v4l2loopback support to install ``akmod-v4l2loopback`` and configure the kernel module
