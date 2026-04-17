@@ -26,8 +26,30 @@ issues: https://github.com/branic/system_management/issues
 # uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
 # and '.git' are always filtered. Mutually exclusive with 'manifest'
 build_ignore:
+  - .ansible
+  - .ansible-lint
+  - .devcontainer
+  - .flake8
+  - .github
   - .gitignore
+  - .isort.cfg
+  - .markdownlint.yml
+  - .pre-commit-config.yaml
+  - .prettierignore
+  - .vscode
+  - .yamllint.yml
   - changelogs/.plugin-cache.yaml
+  - changelogs/config.yaml
+  - changelogs/fragments
+  - CODE_OF_CONDUCT.md
+  - collections
+  - CONTRIBUTING
+  - devfile.yaml
+  - extensions/molecule
+  - MAINTAINERS
+  - pyproject.toml
+  - RELEASING.md
+  - tox-ansible.ini
 # A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
 # list of MANIFEST.in style
 # L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key
