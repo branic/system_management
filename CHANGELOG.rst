@@ -1,6 +1,46 @@
-This should be updated by antsibull-changelog. Do not edit this manually!
+=================================================
+Branic System Management Collection Release Notes
+=================================================
 
-See https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst for
-information on how to use antsibull-changelog.
+.. contents:: Topics
 
-Check out ``changelogs/config.yaml`` for its configuration. You need to change at least the ``title`` field in there.
+v1.0.0
+======
+
+Release Summary
+---------------
+
+Initial release of the collection
+
+Minor Changes
+-------------
+
+- Add ``openshift_local`` role to install or upgrade OpenShift Local (CRC) with optional host checks, configurable ``crc`` settings, and ``~/.bashrc`` completion.
+- Add ``secureboot_signing`` role for Secure Boot MOK enrollment and kernel module signing with shared keypair support for akmods and dkms
+- Add ``system_config`` and ``user_config`` roles; align roles with standard conventions; update configs
+- Add playbook to update cloud CLIs
+- ``openshift_local`` — optional temporary passwordless sudo for ``crc setup`` via a validated ``/etc/sudoers.d`` file that is removed afterward (``openshift_local_crc_setup_temporary_sudo``).
+- add ``to_gnome_clocks`` filter plugin for generating GNOME world clock GVariant strings
+- install_cloud_clis - create install_cloud_clis_bin_dir before CLI install tasks when the directory is missing
+- install_cloud_clis - manage bash completion in one ``.bashrc`` block
+- install_cloud_clis - remove stale AWS CLI versions after install
+- install_cloud_clis role - resolve ROSA CLI latest stable from GitHub releases and download from mirror.openshift.com/pub/cgw/rosa
+- system_config - Add v4l2loopback support to install ``akmod-v4l2loopback`` and configure the kernel module
+- system_config - add package management with RPM Fusion repository and package installation support
+- user_config role - add Python tool installation via uv
+- user_config role - add VS Code and Cursor extension installation via CLI
+- user_config role - add optional GNOME Shell extension installation
+- user_config role - add optional uv installation via the standalone installer
+- user_config role - replace hard-coded dconf tasks with the ``user_config_dconf_settings`` variable
+
+Bugfixes
+--------
+
+- fix ansible_user_dir deprecation warnings
+- fix missing directories and default bookmarks include handling
+- install_cloud_clis - fix AWS CLI first-time install failure
+- install_cloud_clis - guard bash completion lines in .bashrc with ``command -v`` so they are silently skipped when the CLI is not installed
+- install_cloud_clis - select Tekton CLI GitHub release by highest semver among GA releases
+- install_cloud_clis - select helm, kustomize, ROSA, stern, and kube-linter GitHub releases by highest semver among GA releases
+- install_cloud_clis role - apply install_cloud_clis_bin_dir and install_cloud_clis_aws_install_root defaults in tasks after facts instead of argument_specs and role defaults, so validate_argument_spec works when play gather_facts is false
+- use a consistent home directory and UID/GID for templated user files

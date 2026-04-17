@@ -17,3 +17,8 @@ collections/
 tests/output/
 
 README.md
+
+# antsibull-changelog output (do not reformat)
+CHANGELOG.md
+CHANGELOG.rst
+changelogs/changelog.yaml

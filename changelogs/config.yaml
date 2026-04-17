@@ -1,10 +1,11 @@
 ---
 output:
-  - file: ../CHANGELOG.rst
+  # Paths are relative to the collection root (where galaxy.yml lives), not changelogs/.
+  - file: CHANGELOG.rst
     filename_version_depth: 0
     title_version_depth: 0
     format: rst
-  - file: ../CHANGELOG.md
+  - file: CHANGELOG.md
     filename_version_depth: 0
     title_version_depth: 0
     format: md
