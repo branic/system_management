@@ -1,0 +1,38 @@
+---
+# Internal: GitHub Releases API (first page item = newest by publish date).
+__openshift_local_crc_github_releases_api: https://api.github.com/repos/crc-org/crc/releases?per_page=1
+
+# Internal: Red Hat mirror base; archive name is crc-linux-<arch>.tar.xz under "latest".
+__openshift_local_crc_download_base: >-
+  https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest
+
+# Internal: RPM names checked (and optionally installed) on Fedora/RHEL family hosts.
+__openshift_local_host_packages:
+  - libvirt
+  - NetworkManager
+
+# Per-preset minimums aligned with CRC docs and pkg/crc/constants (defaults / validation).
+# Host_* = physical system requirements (https://crc.dev/docs/using/).
+# crc_* = minimum valid crc config values (cpus, memory MiB, disk-size GiB).
+__openshift_local_preset_minimums:
+  openshift:
+    host_cpus: 4
+    host_memory_mb: 10752
+    host_disk_free_gb: 35
+    crc_cpus: 4
+    crc_memory_mib: 10752
+    crc_disk_size_gib: 31
+  okd:
+    host_cpus: 4
+    host_memory_mb: 10752
+    host_disk_free_gb: 35
+    crc_cpus: 4
+    crc_memory_mib: 10752
+    crc_disk_size_gib: 31
+  microshift:
+    host_cpus: 2
+    host_memory_mb: 4096
+    host_disk_free_gb: 35
+    crc_cpus: 2
+    crc_memory_mib: 4096
+    crc_disk_size_gib: 31

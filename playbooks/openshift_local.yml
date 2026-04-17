@@ -1,0 +1,9 @@
+---
+- name: Install or upgrade OpenShift Local (CRC)
+  hosts: "{{ target | default('all') }}"
+  gather_facts: false
+
+  tasks:
+    - name: Include openshift_local role
+      ansible.builtin.include_role:
+        name: openshift_local

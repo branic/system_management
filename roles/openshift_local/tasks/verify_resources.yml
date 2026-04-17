@@ -1,0 +1,105 @@
+---
+- name: verify_resources | Resolve effective CRC preset for minimums
+  ansible.builtin.set_fact:
+    __openshift_local_effective_preset: "{{ __openshift_local_effective_crc_config['preset'] | default('openshift') }}"
+
+- name: verify_resources | Fail when preset is unknown for minimum tables
+  ansible.builtin.fail:
+    msg: >-
+      Unknown CRC preset '{{ __openshift_local_effective_preset }}'. Supported presets:
+      {{ __openshift_local_preset_minimums.keys() | list | join(', ') }}.
+  when: __openshift_local_effective_preset not in __openshift_local_preset_minimums
+
+- name: verify_resources | Load minimums for selected preset
+  ansible.builtin.set_fact:
+    __openshift_local_preset_mins: "{{ __openshift_local_preset_minimums[__openshift_local_effective_preset] }}"
+
+- name: verify_resources | Free disk space (GiB) on filesystem containing user home
+  ansible.builtin.command:
+    cmd: df -BG --output=avail {{ ansible_facts['user_dir'] | quote }}
+  register: __openshift_local_df_user_dir
+  changed_when: false
+
+- name: verify_resources | Parse free disk for user home mount
+  ansible.builtin.set_fact:
+    __openshift_local_host_disk_free_gb: >-
+      {{
+        __openshift_local_df_user_dir.stdout_lines[1]
+        | regex_replace('G$', '')
+        | int
+      }}
+
+- name: verify_resources | Compute minimum free disk required on home filesystem
+  ansible.builtin.set_fact:
+    __openshift_local_required_host_disk_free_gb: >-
+      {{
+        [
+          __openshift_local_preset_mins['host_disk_free_gb'] | int,
+          (
+            openshift_local_crc_config['disk-size'] | int
+            if ('disk-size' in openshift_local_crc_config)
+            else 0
+          ),
+        ]
+        | max
+      }}
+
+- name: verify_resources | Assert host CPUs meet preset minimum
+  ansible.builtin.assert:
+    that:
+      - >-
+        (
+          ansible_facts['processor_vcpus']
+          | default(ansible_facts['ansible_processor_vcpus'], true)
+          | int
+        ) >= (__openshift_local_preset_mins['host_cpus'] | int)
+    fail_msg: >-
+      Host has {{ ansible_facts['processor_vcpus'] | default(ansible_facts['ansible_processor_vcpus'], true) }} vCPU(s);
+      preset '{{ __openshift_local_effective_preset }}' requires at least {{ __openshift_local_preset_mins['host_cpus'] }}.
+
+- name: verify_resources | Assert host memory meets preset minimum
+  ansible.builtin.assert:
+    that:
+      - (ansible_facts['memtotal_mb'] | int) >= (__openshift_local_preset_mins['host_memory_mb'] | int)
+    fail_msg: >-
+      Host has {{ ansible_facts['memtotal_mb'] }} MiB RAM; preset '{{ __openshift_local_effective_preset }}'
+      requires at least {{ __openshift_local_preset_mins['host_memory_mb'] }} MiB.
+
+- name: verify_resources | Assert free disk on home filesystem meets preset and disk-size needs
+  ansible.builtin.assert:
+    that:
+      - (__openshift_local_host_disk_free_gb | int) >= (__openshift_local_required_host_disk_free_gb | int)
+    fail_msg: >-
+      Free disk on the filesystem containing {{ ansible_facts['user_dir'] }} is about
+      {{ __openshift_local_host_disk_free_gb }} GiB (df). At least
+      {{ __openshift_local_required_host_disk_free_gb }} GiB free is required: the maximum of
+      {{ __openshift_local_preset_mins['host_disk_free_gb'] }} GiB (preset '{{ __openshift_local_effective_preset }}'
+      documentation minimum){% if 'disk-size' in openshift_local_crc_config %} and
+      {{ openshift_local_crc_config['disk-size'] | int }} GiB (configured crc disk-size){% endif %}.
+
+- name: verify_resources | Validate desired cpus against CRC minimum for preset
+  when: "'cpus' in openshift_local_crc_config"
+  ansible.builtin.assert:
+    that:
+      - (openshift_local_crc_config['cpus'] | int) >= (__openshift_local_preset_mins['crc_cpus'] | int)
+    fail_msg: >-
+      openshift_local_crc_config.cpus ({{ openshift_local_crc_config['cpus'] }}) is below the minimum
+      {{ __openshift_local_preset_mins['crc_cpus'] }} for preset '{{ __openshift_local_effective_preset }}'.
+
+- name: verify_resources | Validate desired memory against CRC minimum for preset
+  when: "'memory' in openshift_local_crc_config"
+  ansible.builtin.assert:
+    that:
+      - (openshift_local_crc_config['memory'] | int) >= (__openshift_local_preset_mins['crc_memory_mib'] | int)
+    fail_msg: >-
+      openshift_local_crc_config.memory ({{ openshift_local_crc_config['memory'] }} MiB) is below the minimum
+      {{ __openshift_local_preset_mins['crc_memory_mib'] }} MiB for preset '{{ __openshift_local_effective_preset }}'.
+
+- name: verify_resources | Validate desired disk-size meets CRC minimum for preset
+  when: "'disk-size' in openshift_local_crc_config"
+  ansible.builtin.assert:
+    that:
+      - (openshift_local_crc_config['disk-size'] | int) >= (__openshift_local_preset_mins['crc_disk_size_gib'] | int)
+    fail_msg: >-
+      openshift_local_crc_config['disk-size'] ({{ openshift_local_crc_config['disk-size'] }} GiB) is below the minimum
+      {{ __openshift_local_preset_mins['crc_disk_size_gib'] }} GiB for preset '{{ __openshift_local_effective_preset }}'.

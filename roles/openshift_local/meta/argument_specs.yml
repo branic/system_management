@@ -1,0 +1,75 @@
+---
+argument_specs:
+  main:
+    short_description: Install or upgrade OpenShift Local (CRC) for the connection user
+    description:
+      - >-
+        Installs or upgrades the crc CLI from the Red Hat mirror, reconciles crc configuration
+        from openshift_local_crc_config, runs crc delete --force and crc setup when the binary or
+        configuration drifts, checks Fedora/RHEL host packages (optional install), validates host
+        resources and sizing keys against preset minimums, optionally prunes stale bundle caches,
+        and can maintain bash completion in ~/.bashrc.
+    author:
+      - Brant Evans
+    options:
+      openshift_local_manage_bashrc_completion:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When true, maintain a marked block in the connection user's .bashrc for crc bash completion.
+          - When false, skip .bashrc changes.
+
+      openshift_local_bin_dir:
+        type: str
+        required: false
+        description:
+          - Directory for the crc binary (must be on PATH for interactive use).
+          - If unset, the role sets this after gathering facts to ansible_facts user_dir plus /.local/bin.
+
+      openshift_local_crc_config:
+        type: dict
+        required: false
+        default: {}
+        description:
+          - >-
+            Desired crc configuration as a single mapping (preset, cpus, memory, disk-size,
+            consent-telemetry, skip-check-*, and any other crc config keys). The role diffs
+            against the live configuration and runs crc config set only for keys that differ.
+          - >-
+            When any key needs changing, the role reconciles by deleting an existing instance
+            (crc delete --force) and running crc setup, even if the crc binary was not updated.
+          - See https://crc.dev/docs/configuring/
+
+      openshift_local_install_host_packages:
+        type: bool
+        required: false
+        default: false
+        description:
+          - >-
+            When true on Fedora/RHEL family hosts, install required RPMs from the internal list
+            (see role vars) using privilege escalation.
+          - >-
+            After any optional install, the role refreshes package facts and asserts every required
+            package is present. When false, only the fact refresh and assert run.
+
+      openshift_local_crc_setup_temporary_sudo:
+        type: bool
+        required: false
+        default: true
+        description:
+          - >-
+            When true, before ``crc setup`` the role installs a temporary ``/etc/sudoers.d`` file
+            granting the connection user passwordless sudo, validates it with ``visudo``, then
+            removes the file afterward (even if ``crc setup`` fails). Requires privilege escalation
+            for those two tasks.
+          - Set to false if the user already has passwordless sudo or you manage sudoers elsewhere.
+
+      openshift_local_crc_setup_sudoers_path:
+        type: str
+        required: false
+        description:
+          - >-
+            Absolute path for the temporary sudoers fragment when
+            ``openshift_local_crc_setup_temporary_sudo`` is true.
+          - If omitted, defaults to ``/etc/sudoers.d/99-crc-setup-<connection username>``.

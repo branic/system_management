@@ -1,0 +1,142 @@
+---
+- name: Gather facts for CRC host validation and installation
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - min
+      - hardware
+      - virtual
+
+- name: Apply default openshift_local_bin_dir when not set by caller
+  ansible.builtin.set_fact:
+    openshift_local_bin_dir: "{{ ansible_facts['user_dir'] }}/.local/bin"
+  when: openshift_local_bin_dir is not defined
+
+- name: Ensure openshift_local_bin_dir exists
+  ansible.builtin.file:
+    path: "{{ openshift_local_bin_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Map system architecture to CRC Linux archive suffix
+  ansible.builtin.set_fact:
+    __openshift_local_crc_linux_arch: >-
+      {{
+        {
+          'x86_64': 'amd64',
+          'aarch64': 'arm64',
+        }[ansible_facts['architecture']]
+      }}
+  when: ansible_facts['architecture'] in ['x86_64', 'aarch64']
+
+- name: Fail when architecture is not supported for CRC Linux bundles
+  when: ansible_facts['architecture'] not in ['x86_64', 'aarch64']
+  ansible.builtin.fail:
+    msg: >-
+      This role only supports x86_64 and aarch64 Linux targets for CRC downloads.
+      Current ansible_facts.architecture is {{ ansible_facts['architecture'] }}.
+
+- name: Check Red Hat family host prerequisites for CRC
+  ansible.builtin.include_tasks:
+    file: host_prereqs.yml
+
+- name: Build effective CRC config mapping (default preset for validation)
+  ansible.builtin.set_fact:
+    __openshift_local_effective_crc_config: >-
+      {{
+        openshift_local_crc_config
+        | combine({'preset': openshift_local_crc_config['preset'] | default('openshift')}, recursive=True)
+      }}
+
+- name: Verify host resources and desired CRC sizing keys
+  ansible.builtin.include_tasks:
+    file: verify_resources.yml
+
+- name: Retrieve latest CRC release metadata from GitHub
+  ansible.builtin.uri:
+    url: "{{ __openshift_local_crc_github_releases_api }}"
+    headers:
+      Accept: application/vnd.github+json
+    return_content: false
+    status_code:
+      - 200
+  register: __openshift_local_crc_latest_release
+  check_mode: false
+  failed_when: (__openshift_local_crc_latest_release.json | default([]) | length) < 1
+
+- name: Determine latest CRC version from GitHub tag
+  ansible.builtin.set_fact:
+    __openshift_local_latest_crc_version: >-
+      {{
+        __openshift_local_crc_latest_release.json[0]['tag_name']
+        | regex_replace('^v((?:\d+\.?){1,3})$', '\1')
+      }}
+
+- name: Check if crc binary is present
+  ansible.builtin.stat:
+    path: "{{ openshift_local_bin_dir }}/crc"
+  register: __openshift_local_crc_cli_stat
+
+- name: Retrieve installed CRC version
+  when: __openshift_local_crc_cli_stat.stat.exists
+  block:
+    - name: Run crc version
+      ansible.builtin.command:
+        cmd: "{{ openshift_local_bin_dir }}/crc version"
+      register: __openshift_local_crc_version_cmd
+      changed_when: false
+
+    - name: Parse installed CRC version from crc version output
+      ansible.builtin.set_fact:
+        __openshift_local_installed_crc_version: >-
+          {{
+            __openshift_local_crc_version_cmd.stdout
+            | regex_replace('(?ms)^CRC version: ((?:\d+\.?){1,3}).*$', '\1')
+          }}
+
+- name: Evaluate desired crc config against the installed CLI
+  ansible.builtin.include_tasks:
+    file: crc_evaluate_config.yml
+
+- name: Determine whether install, configuration, or crc setup is required
+  ansible.builtin.set_fact:
+    __openshift_local_needs_reconcile: >-
+      {{
+        (not __openshift_local_crc_cli_stat.stat.exists)
+        or (
+          __openshift_local_installed_crc_version | default('')
+          != __openshift_local_latest_crc_version
+        )
+        or (
+          (__openshift_local_crc_config_keys_to_apply | default([]) | length) > 0
+        )
+      }}
+
+- name: Display CRC version reconcile info
+  ansible.builtin.debug:
+    msg:
+      - >-
+        Installed Version: {{ __openshift_local_installed_crc_version | default('NOT INSTALLED') }}
+      - "Latest Version:    {{ __openshift_local_latest_crc_version }}"
+      - "Reconcile required: {{ __openshift_local_needs_reconcile }}"
+      - >-
+        CRC config keys to apply: {{ __openshift_local_crc_config_keys_to_apply | default([]) | length }}
+    verbosity: 1
+
+- name: Apply CRC changes and refresh shell completion
+  block:
+    - name: Reconcile CRC (binary, config, crc setup, bundle prune) when required
+      when: __openshift_local_needs_reconcile | bool
+      ansible.builtin.include_tasks:
+        file: install_upgrade.yml
+
+  always:
+    - name: Refresh crc bash completion block in .bashrc
+      when: openshift_local_manage_bashrc_completion | bool
+      ansible.builtin.blockinfile:
+        path: "{{ ansible_facts['user_dir'] }}/.bashrc"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK branic.system_management.openshift_local"
+        block: "{{ lookup('template', 'bashrc_crc_completion.j2') }}"
+        create: true
+        backup: true
+        mode: "0644"

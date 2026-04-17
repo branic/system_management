@@ -1,0 +1,132 @@
+---
+- name: install_upgrade | Install or update crc binary from Red Hat mirror
+  when: >-
+    (not __openshift_local_crc_cli_stat.stat.exists)
+    or (
+      __openshift_local_installed_crc_version | default('')
+      != __openshift_local_latest_crc_version
+    )
+  ansible.builtin.unarchive:
+    src: >-
+      {{ __openshift_local_crc_download_base }}/crc-linux-{{ __openshift_local_crc_linux_arch }}.tar.xz
+    dest: "{{ openshift_local_bin_dir }}"
+    remote_src: true
+    include:
+      - "*crc"
+    extra_opts:
+      - "--strip-components=1"
+
+- name: install_upgrade | Delete existing CRC instance without prompting
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_local_bin_dir }}/crc"
+      - delete
+      - "--force"
+  register: __openshift_local_crc_delete
+  changed_when: __openshift_local_crc_delete.rc == 0
+  failed_when: __openshift_local_crc_delete.rc not in [0, 1]
+
+- name: install_upgrade | Apply desired crc config keys
+  when: __openshift_local_crc_config_keys_to_apply | default([]) | length > 0
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_local_bin_dir }}/crc"
+      - config
+      - set
+      - "{{ item['key'] }}"
+      - "{{ item['value'] | string }}"
+  loop: "{{ __openshift_local_crc_config_keys_to_apply | default([]) }}"
+  register: __openshift_local_crc_config_apply
+  changed_when: >-
+    (
+      __openshift_local_crc_config_apply.results
+      | default([__openshift_local_crc_config_apply])
+      | selectattr('rc', 'equalto', 0)
+      | list
+      | length > 0
+    )
+  failed_when: >-
+    (
+      __openshift_local_crc_config_apply.results
+      | default([__openshift_local_crc_config_apply])
+      | rejectattr('rc', 'equalto', 0)
+      | list
+      | length > 0
+    )
+  loop_control:
+    label: "{{ item['key'] }}"
+
+- name: install_upgrade | Set path for temporary crc-setup sudoers fragment
+  ansible.builtin.set_fact:
+    __openshift_local_crc_setup_sudoers_path: >-
+      {{
+        openshift_local_crc_setup_sudoers_path
+        | default('/etc/sudoers.d/99-crc-setup-' ~ ansible_facts['user_id'], true)
+      }}
+
+- name: install_upgrade | Run crc setup (optional temporary NOPASSWD sudo)
+  block:
+    - name: install_upgrade | Install temporary sudoers for crc setup
+      when: openshift_local_crc_setup_temporary_sudo | default(true) | bool
+      ansible.builtin.copy:
+        dest: "{{ __openshift_local_crc_setup_sudoers_path }}"
+        content: "{{ ansible_facts['user_id'] }} ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: /usr/sbin/visudo -cf %s
+      become: true
+
+    - name: install_upgrade | Run crc setup
+      ansible.builtin.command:
+        cmd: "{{ openshift_local_bin_dir }}/crc setup"
+      register: __openshift_local_crc_setup
+      changed_when: >-
+        __openshift_local_crc_setup.stderr is regex(
+        "Getting|Installing|Downloading|Uncompressing", multiline=true, ignorecase=true)
+
+  always:
+    - name: install_upgrade | Remove temporary sudoers for crc setup
+      when: openshift_local_crc_setup_temporary_sudo | default(true) | bool
+      ansible.builtin.file:
+        path: "{{ __openshift_local_crc_setup_sudoers_path }}"
+        state: absent
+      become: true
+
+- name: install_upgrade | Determine bundle version from crc setup output
+  ansible.builtin.set_fact:
+    __openshift_local_bundle_version: >-
+      {{
+        __openshift_local_crc_setup.stderr
+        | regex_replace('(?ms)^.*Checking .+/(crc_.+).crcbundle exists.*$', '\1')
+      }}
+
+- name: install_upgrade | Determine bundles cache path from crc setup output
+  ansible.builtin.set_fact:
+    __openshift_local_bundles_path: >-
+      {{
+        __openshift_local_crc_setup.stderr
+        | regex_replace('(?ms)^.*Checking if (/.+)/crc_.+.crcbundle exists.*$', '\1')
+      }}
+
+- name: install_upgrade | Prune stale crc bundle caches
+  when: >-
+    __openshift_local_bundle_version is search('^crc_')
+    and __openshift_local_bundles_path is search('^/')
+  block:
+    - name: install_upgrade | Find cached crc bundles
+      ansible.builtin.find:
+        paths:
+          - "{{ __openshift_local_bundles_path }}"
+        file_type: any
+      register: __openshift_local_crc_bundles
+
+    - name: install_upgrade | Remove stale crc bundles
+      ansible.builtin.file:
+        path: "{{ __openshift_local_bundle_item.path }}"
+        state: absent
+      loop: "{{ __openshift_local_crc_bundles.files }}"
+      loop_control:
+        loop_var: __openshift_local_bundle_item
+        label: "{{ __openshift_local_bundle_item.path }}"
+      when: __openshift_local_bundle_item.path is not search(__openshift_local_bundle_version)

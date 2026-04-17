@@ -1,0 +1,13 @@
+---
+openshift_local_manage_bashrc_completion: true
+
+# Desired crc config keys and values (see https://crc.dev/docs/configuring/). Empty means the
+# role does not enforce crc settings beyond internal preset default used for validation.
+openshift_local_crc_config: {}
+
+# When true on Red Hat family hosts, install required RPMs from role vars with privilege escalation.
+openshift_local_install_host_packages: false
+
+# When true, create a temporary /etc/sudoers.d fragment so the connection user can sudo without a
+# password during crc setup, then remove it afterward (requires privilege escalation for those tasks).
+openshift_local_crc_setup_temporary_sudo: true

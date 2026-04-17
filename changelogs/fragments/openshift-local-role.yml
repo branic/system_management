@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - >-
+    Add ``openshift_local`` role to install or upgrade OpenShift Local (CRC) with optional
+    host checks, configurable ``crc`` settings, and ``~/.bashrc`` completion.

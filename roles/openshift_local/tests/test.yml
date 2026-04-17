@@ -1,0 +1,6 @@
+---
+- name: Test openshift_local role
+  hosts: localhost
+  connection: local
+  roles:
+    - role: openshift_local

@@ -1,0 +1,31 @@
+---
+- name: host_prereqs | Skip package checks on non-Red Hat family hosts
+  when: ansible_facts['os_family'] != 'RedHat'
+  ansible.builtin.debug:
+    msg: Skipping CRC host package checks (not Red Hat family OS).
+    verbosity: 1
+
+- name: host_prereqs | Red Hat family package checks
+  when: ansible_facts['os_family'] == 'RedHat'
+  block:
+    - name: host_prereqs | Install required host packages when enabled
+      when: openshift_local_install_host_packages | bool
+      ansible.builtin.dnf:
+        name: "{{ __openshift_local_host_packages }}"
+        state: present
+      become: true
+
+    - name: host_prereqs | Refresh package facts after optional install
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: host_prereqs | Verify required host packages are present
+      ansible.builtin.assert:
+        that:
+          - item in ansible_facts['packages']
+        fail_msg: >-
+          Required package '{{ item }}' is not installed. Install it manually, or set
+          openshift_local_install_host_packages to true so the role can install it (requires privilege escalation).
+      loop: "{{ __openshift_local_host_packages }}"
+      loop_control:
+        label: "{{ item }}"
