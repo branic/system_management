@@ -27,12 +27,12 @@ antsibull-changelog release
 This will:
 
 - Read all fragments from `changelogs/fragments/`
-- Generate/update `CHANGELOG.rst` and `changelogs/changelog.yaml`
+- Generate/update `CHANGELOG.rst`, `CHANGELOG.md`, and `changelogs/changelog.yaml`
 - Delete the processed fragment files (since `keep_fragments: false`)
 
 ## Step 4: Commit and push to `main`
 
-Commit all the changes (bumped `galaxy.yml`, updated `CHANGELOG.rst`,
+Commit all the changes (bumped `galaxy.yml`, updated changelog outputs,
 updated `changelogs/changelog.yaml`, deleted fragments) and merge to
 `main` via a PR.
 
@@ -43,7 +43,7 @@ On the repository's GitHub Releases page, create a new release:
 - **Tag:** Use the version number (e.g., `v1.1.0` or `1.1.0`)
 - **Target:** `main`
 - **Title:** e.g., `branic.system_management 1.1.0`
-- **Description:** Paste or reference the changelog entry
+- **Description:** Use the notes for this version from `CHANGELOG.md` (or `CHANGELOG.rst`). You can **paste** that section into the release body so subscribers see full text in the release UI and emails, or **link** to the file at the tag you are creating, for example `https://github.com/branic/system_management/blob/v1.1.0/CHANGELOG.md` (use your real tag and version). You can also do both: a short summary plus a link to the full changelog.
 - **Publish** the release (do not leave it as a draft)
 
 ## Step 6: Verify
@@ -54,8 +54,22 @@ GitHub to confirm the workflow succeeded.
 
 ## Prerequisites
 
-- A GitHub Environment named `release` must be configured on the
-  repository with the appropriate secrets (e.g., `ANSIBLE_GALAXY_API_KEY`).
+- Configure a GitHub Environment named **`release`**. The `release.yml` workflow
+  assigns that environment to the Galaxy publish job so **deployment protection
+  rules apply** and **environment secrets** (including the Galaxy API token) are
+  available to the job.
+- Add the **Ansible Galaxy API token** under **Settings → Environments →
+  `release` → Environment secrets** using the name **`ANSIBLE_GALAXY_API_KEY`**
+  (same name the workflow reads). Create or copy the token from Ansible Galaxy
+  (profile / token management on [galaxy.ansible.com](https://galaxy.ansible.com)).
+  GitHub treats secret names as **case-insensitive**; the UI may show the name in
+  uppercase.
+- Under **Settings → Environments → `release` → Deployment protection rules**,
+  **Deployment branches and tags** must allow the Git tags used for releases.
+  For semver tags like `v1.0.0`, add a tag pattern such as `v*.*.*` (or a
+  narrower pattern you prefer). If only certain branches are allowed, the
+  release workflow fails immediately with an environment protection error when
+  a release is published from a tag.
 - `antsibull-changelog` must be installed locally to compile fragments
   before release. CI only validates fragments; it does not auto-generate
   the changelog.

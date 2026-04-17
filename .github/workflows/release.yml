@@ -5,9 +5,32 @@ on:  # yamllint disable-line rule:truthy
   release:
     types: [published]
 
+# One publish per tag; avoid overlapping runs if a release is re-triggered.
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   release_galaxy:
-    uses: ansible/ansible-content-actions/.github/workflows/release_galaxy.yaml@main
-    secrets: inherit
-    with:
-      environment: release
+    name: Galaxy release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Build the collection
+        run: ansible-galaxy collection build -v --force
+      - name: Publish the collection on Galaxy
+        env:
+          ANSIBLE_GALAXY_API_KEY: ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ANSIBLE_GALAXY_API_KEY}" ]; then
+            echo "ANSIBLE_GALAXY_API_KEY is required to publish to Galaxy"
+            exit 1
+          fi
+          TARBALL=$(ls -1 ./*.tar.gz)
+          ansible-galaxy collection publish "${TARBALL}" \
+            --api-key "${ANSIBLE_GALAXY_API_KEY}"
