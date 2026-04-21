@@ -52,25 +52,77 @@
   ansible.builtin.include_tasks:
     file: verify_resources.yml
 
-- name: Retrieve latest CRC release metadata from GitHub
+- name: Resolve openshift_local_crc_version input for pin handling
+  ansible.builtin.set_fact:
+    __openshift_local_crc_version_input: "{{ openshift_local_crc_version | default('', true) | trim }}"
+
+- name: Validate pinned CRC semver format
+  when: __openshift_local_crc_version_input | length > 0
+  ansible.builtin.assert:
+    that:
+      - __openshift_local_crc_version_input is match('^v?[0-9]+\.[0-9]+\.[0-9]+$')
+    fail_msg: >-
+      openshift_local_crc_version must match X.Y.Z or vX.Y.Z (digits only in each segment). This
+      value is used in GitHub and Red Hat mirror URL path segments. Received:
+      {{ __openshift_local_crc_version_input }}
+    quiet: true
+
+- name: Retrieve pinned CRC release metadata from GitHub
+  when: __openshift_local_crc_version_input | length > 0
   ansible.builtin.uri:
-    url: "{{ __openshift_local_crc_github_releases_api }}"
+    url: >-
+      {{ __openshift_local_crc_github_api_base ~ '/releases/tags/v' ~
+      (__openshift_local_crc_version_input | regex_replace('^v', '')) }}
     headers:
       Accept: application/vnd.github+json
     return_content: false
     status_code:
       - 200
-  register: __openshift_local_crc_latest_release
+  register: __openshift_local_crc_gh_pinned
   check_mode: false
-  failed_when: (__openshift_local_crc_latest_release.json | default([]) | length) < 1
 
-- name: Determine latest CRC version from GitHub tag
+- name: Retrieve latest CRC release metadata from GitHub
+  when: __openshift_local_crc_version_input | length == 0
+  ansible.builtin.uri:
+    url: "{{ __openshift_local_crc_github_releases_latest }}"
+    headers:
+      Accept: application/vnd.github+json
+    return_content: false
+    status_code:
+      - 200
+  register: __openshift_local_crc_gh_latest
+  check_mode: false
+  failed_when: (__openshift_local_crc_gh_latest['json'] | default([]) | length) < 1
+
+- name: Select active GitHub releases API uri result
   ansible.builtin.set_fact:
-    __openshift_local_latest_crc_version: >-
+    __openshift_local_crc_gh_uri: >-
       {{
-        __openshift_local_crc_latest_release.json[0]['tag_name']
+        __openshift_local_crc_gh_pinned
+        if (__openshift_local_crc_version_input | length > 0)
+        else __openshift_local_crc_gh_latest
+      }}
+
+- name: Set GitHub API JSON payload from uri result
+  ansible.builtin.set_fact:
+    __openshift_local_crc_gh_body: "{{ __openshift_local_crc_gh_uri['json'] }}"
+
+- name: Determine target CRC version from GitHub tag
+  ansible.builtin.set_fact:
+    __openshift_local_target_crc_version: >-
+      {{
+        (
+          __openshift_local_crc_gh_body['tag_name']
+          if __openshift_local_crc_gh_body is mapping
+          else __openshift_local_crc_gh_body[0]['tag_name']
+        )
         | regex_replace('^v((?:\d+\.?){1,3})$', '\1')
       }}
+
+- name: Set Red Hat mirror base for crc-linux archive download
+  ansible.builtin.set_fact:
+    __openshift_local_crc_download_base: >-
+      {{ __openshift_local_crc_clients_crc_root ~ '/' ~ __openshift_local_target_crc_version }}
 
 - name: Check if crc binary is present
   ansible.builtin.stat:
@@ -105,7 +157,7 @@
         (not __openshift_local_crc_cli_stat.stat.exists)
         or (
           __openshift_local_installed_crc_version | default('')
-          != __openshift_local_latest_crc_version
+          != __openshift_local_target_crc_version
         )
         or (
           (__openshift_local_crc_config_keys_to_apply | default([]) | length) > 0
@@ -117,7 +169,7 @@
     msg:
       - >-
         Installed Version: {{ __openshift_local_installed_crc_version | default('NOT INSTALLED') }}
-      - "Latest Version:    {{ __openshift_local_latest_crc_version }}"
+      - "Target Version:    {{ __openshift_local_target_crc_version }}"
       - "Reconcile required: {{ __openshift_local_needs_reconcile }}"
       - >-
         CRC config keys to apply: {{ __openshift_local_crc_config_keys_to_apply | default([]) | length }}

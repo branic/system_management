@@ -4,11 +4,11 @@ argument_specs:
     short_description: Install or upgrade OpenShift Local (CRC) for the connection user
     description:
       - >-
-        Installs or upgrades the crc CLI from the Red Hat mirror, reconciles crc configuration
-        from openshift_local_crc_config, runs crc delete --force and crc setup when the binary or
-        configuration drifts, checks Fedora/RHEL host packages (optional install), validates host
-        resources and sizing keys against preset minimums, optionally prunes stale bundle caches,
-        and can maintain bash completion in ~/.bashrc.
+        Installs or upgrades the crc CLI from the Red Hat mirror (specific semver or latest from
+        GitHub), reconciles crc configuration from openshift_local_crc_config, runs crc delete
+        --force and crc setup when the binary or configuration drifts, checks Fedora/RHEL host
+        packages (optional install), validates host resources and sizing keys against preset
+        minimums, optionally prunes stale bundle caches, and can maintain bash completion in ~/.bashrc.
     author:
       - Brant Evans
     options:
@@ -26,6 +26,19 @@ argument_specs:
         description:
           - Directory for the crc binary (must be on PATH for interactive use).
           - If unset, the role sets this after gathering facts to ansible_facts user_dir plus /.local/bin.
+
+      openshift_local_crc_version:
+        type: str
+        required: false
+        default: ""
+        description:
+          - >-
+            CRC release to install, as X.Y.Z or vX.Y.Z (digits only; used in GitHub and mirror URLs).
+            When empty or unset, the role uses the newest release from GitHub. Invalid values fail
+            before any HTTP request. A pinned release that does not exist on GitHub fails that request.
+          - >-
+            The Linux archive is downloaded from the Red Hat mirror under
+            openshift-v4/clients/crc/<semver>/.
 
       openshift_local_crc_config:
         type: dict

@@ -1,6 +1,10 @@
 ---
 openshift_local_manage_bashrc_completion: true
 
+# When empty, install the newest CRC release from GitHub. When set (e.g. "2.58.0" or "v2.58.0"),
+# install that release only. Must match X.Y.Z or vX.Y.Z (see role validation).
+openshift_local_crc_version: ""
+
 # Desired crc config keys and values (see https://crc.dev/docs/configuring/). Empty means the
 # role does not enforce crc settings beyond internal preset default used for validation.
 openshift_local_crc_config: {}

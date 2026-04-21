@@ -4,7 +4,7 @@
     (not __openshift_local_crc_cli_stat.stat.exists)
     or (
       __openshift_local_installed_crc_version | default('')
-      != __openshift_local_latest_crc_version
+      != __openshift_local_target_crc_version
     )
   ansible.builtin.unarchive:
     src: >-
