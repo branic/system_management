@@ -36,6 +36,7 @@
     fail_msg: >-
       Could not determine GNOME Shell version. Ensure gnome-shell is installed and
       `gnome-shell --version` prints a version number (e.g. GNOME Shell 49.4).
+    quiet: true
 
 - name: gnome_extensions | Create temporary directory for extension bundles
   ansible.builtin.tempfile:

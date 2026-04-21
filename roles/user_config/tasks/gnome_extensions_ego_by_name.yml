@@ -29,6 +29,7 @@
     fail_msg: >-
       No extension on extensions.gnome.org has the exact name
       "{{ __user_config_gnome_ext_item.name | trim }}".
+    quiet: true
 
 - name: gnome_extensions_ego_by_name | Set EGO primary key from name search
   ansible.builtin.set_fact:

@@ -37,6 +37,7 @@
       - __install_cloud_clis_latest_stern_cli_ver_details['tag_name'] is defined
     fail_msg: >-
       Could not resolve a GA stern release for the highest semver (check API response and tag format).
+    quiet: true
 
 - name: stern | Determine latest stern version
   ansible.builtin.set_fact:

@@ -37,6 +37,7 @@
       - __install_cloud_clis_latest_kube_linter_cli_ver_details['tag_name'] is defined
     fail_msg: >-
       Could not resolve a GA kube-linter release for the highest semver (check API response and tag format).
+    quiet: true
 
 - name: kube-linter | Determine latest kube-linter version
   ansible.builtin.set_fact:
