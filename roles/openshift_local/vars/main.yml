@@ -1,10 +1,13 @@
 ---
-# Internal: GitHub Releases API (first page item = newest by publish date).
-__openshift_local_crc_github_releases_api: https://api.github.com/repos/crc-org/crc/releases?per_page=1
+# Internal: GitHub API base for crc-org/crc (releases list and release-by-tag).
+__openshift_local_crc_github_api_base: https://api.github.com/repos/crc-org/crc
 
-# Internal: Red Hat mirror base; archive name is crc-linux-<arch>.tar.xz under "latest".
-__openshift_local_crc_download_base: >-
-  https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest
+# Internal: GitHub Releases API (first page item = newest by publish date).
+__openshift_local_crc_github_releases_latest: "{{ __openshift_local_crc_github_api_base }}/releases?per_page=1"
+
+# Internal: Red Hat mirror directory root per CRC semver; archive is crc-linux-<arch>.tar.xz below it.
+__openshift_local_crc_clients_crc_root: >-
+  https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc
 
 # Internal: RPM names checked (and optionally installed) on Fedora/RHEL family hosts.
 __openshift_local_host_packages:

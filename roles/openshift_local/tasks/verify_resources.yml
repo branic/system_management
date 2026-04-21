@@ -56,6 +56,7 @@
     fail_msg: >-
       Host has {{ ansible_facts['processor_vcpus'] | default(ansible_facts['ansible_processor_vcpus'], true) }} vCPU(s);
       preset '{{ __openshift_local_effective_preset }}' requires at least {{ __openshift_local_preset_mins['host_cpus'] }}.
+    quiet: true
 
 - name: verify_resources | Assert host memory meets preset minimum
   ansible.builtin.assert:
@@ -64,6 +65,7 @@
     fail_msg: >-
       Host has {{ ansible_facts['memtotal_mb'] }} MiB RAM; preset '{{ __openshift_local_effective_preset }}'
       requires at least {{ __openshift_local_preset_mins['host_memory_mb'] }} MiB.
+    quiet: true
 
 - name: verify_resources | Assert free disk on home filesystem meets preset and disk-size needs
   ansible.builtin.assert:
@@ -76,6 +78,7 @@
       {{ __openshift_local_preset_mins['host_disk_free_gb'] }} GiB (preset '{{ __openshift_local_effective_preset }}'
       documentation minimum){% if 'disk-size' in openshift_local_crc_config %} and
       {{ openshift_local_crc_config['disk-size'] | int }} GiB (configured crc disk-size){% endif %}.
+    quiet: true
 
 - name: verify_resources | Validate desired cpus against CRC minimum for preset
   when: "'cpus' in openshift_local_crc_config"
@@ -85,6 +88,7 @@
     fail_msg: >-
       openshift_local_crc_config.cpus ({{ openshift_local_crc_config['cpus'] }}) is below the minimum
       {{ __openshift_local_preset_mins['crc_cpus'] }} for preset '{{ __openshift_local_effective_preset }}'.
+    quiet: true
 
 - name: verify_resources | Validate desired memory against CRC minimum for preset
   when: "'memory' in openshift_local_crc_config"
@@ -94,6 +98,7 @@
     fail_msg: >-
       openshift_local_crc_config.memory ({{ openshift_local_crc_config['memory'] }} MiB) is below the minimum
       {{ __openshift_local_preset_mins['crc_memory_mib'] }} MiB for preset '{{ __openshift_local_effective_preset }}'.
+    quiet: true
 
 - name: verify_resources | Validate desired disk-size meets CRC minimum for preset
   when: "'disk-size' in openshift_local_crc_config"
@@ -103,3 +108,4 @@
     fail_msg: >-
       openshift_local_crc_config['disk-size'] ({{ openshift_local_crc_config['disk-size'] }} GiB) is below the minimum
       {{ __openshift_local_preset_mins['crc_disk_size_gib'] }} GiB for preset '{{ __openshift_local_effective_preset }}'.
+    quiet: true

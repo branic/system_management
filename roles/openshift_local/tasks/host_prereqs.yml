@@ -26,6 +26,7 @@
         fail_msg: >-
           Required package '{{ item }}' is not installed. Install it manually, or set
           openshift_local_install_host_packages to true so the role can install it (requires privilege escalation).
+        quiet: true
       loop: "{{ __openshift_local_host_packages }}"
       loop_control:
         label: "{{ item }}"
