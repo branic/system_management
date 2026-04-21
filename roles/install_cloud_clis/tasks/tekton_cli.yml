@@ -37,6 +37,7 @@
       - __install_cloud_clis_latest_tekton_cli_ver_details['tag_name'] is defined
     fail_msg: >-
       Could not resolve a GA Tekton CLI release for the highest semver (check API response and tag format).
+    quiet: true
 
 - name: tekton_cli | Determine latest Tekton CLI version
   ansible.builtin.set_fact:

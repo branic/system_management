@@ -24,6 +24,7 @@
         fail_msg: >-
           secureboot_signing_mok_password must be between 8 and 16 characters.
           This password is entered at the UEFI MOK Manager screen during enrollment.
+        quiet: true
 
     - name: Secure Boot | Install prerequisites
       ansible.builtin.dnf5:

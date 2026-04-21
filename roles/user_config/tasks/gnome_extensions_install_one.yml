@@ -6,6 +6,7 @@
     that:
       - __user_config_gnome_ext_item is mapping
     fail_msg: user_config_gnome_extensions entries must be dictionaries (id, name, and/or url).
+    quiet: true
 
 - name: gnome_extensions_install_one | Detect which keys are set
   ansible.builtin.set_fact:
@@ -31,6 +32,7 @@
     that:
       - (__uc_ext_has_url | bool) or (__uc_ext_has_id | bool) or (__uc_ext_has_name | bool)
     fail_msg: Each extension entry needs at least one of url, id, or name.
+    quiet: true
 
 - name: gnome_extensions_install_one | Common options
   ansible.builtin.set_fact:
@@ -77,12 +79,14 @@
     that:
       - ( __uc_ext_ego_json | default({}) ).download_url | default('') | string | length > 0
     fail_msg: extensions.gnome.org did not return a download_url for this GNOME Shell version.
+    quiet: true
 
 - name: gnome_extensions_install_one | Require resolved download URL
   ansible.builtin.assert:
     that:
       - __uc_ext_full_download_url | default('') | length > 0
     fail_msg: Could not determine extension download URL.
+    quiet: true
 
 - name: gnome_extensions_install_one | Set local bundle path
   ansible.builtin.set_fact:
