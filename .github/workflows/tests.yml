@@ -20,7 +20,7 @@ jobs:
     uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@46de405af31ba872a770a9b75c90121493c1cbe5
     if: github.event_name == 'pull_request'
   build-import:
-    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@46de405af31ba872a770a9b75c90121493c1cbe5
+    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@17784d5248b78835d2f2488211367e8de5a95381
   ansible-lint:
     uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@17784d5248b78835d2f2488211367e8de5a95381
   sanity:
