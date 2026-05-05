@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - >-
+    system_config role — add ``system_config_package_replacements`` for ``dnf swap``
+    pairs (optional ``allowerasing``), running after repo setup and before DNF package install.

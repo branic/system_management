@@ -22,6 +22,35 @@
     name: "{{ item.name }}"
     state: "{{ item.state | default('enabled') }}"
 
+- name: Packages | Refresh installed package facts for RPM replacements
+  when: (system_config_package_replacements | default([])) | length > 0
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Packages | Replace conflicting RPMs via dnf swap
+  when:
+    - (system_config_package_replacements | default([])) | length > 0
+    - item.remove in ansible_facts.packages
+  ansible.builtin.command:
+    cmd: >-
+      /usr/bin/dnf{%- if item.allowerasing | default(false) %} --allowerasing{% endif %}
+       swap --assumeyes {{ item.remove }} {{ item.install }}
+  loop: "{{ system_config_package_replacements | default([]) }}"
+  loop_control:
+    label: "{{ item.remove }} -> {{ item.install }}"
+  register: __system_config_package_replacement
+  changed_when: >-
+    (
+      'Installing' in ((__system_config_package_replacement.stdout | default(''))
+        ~ (__system_config_package_replacement.stderr | default('')))
+      or 'Removing' in ((__system_config_package_replacement.stdout | default(''))
+        ~ (__system_config_package_replacement.stderr | default('')))
+      or 'Upgrading' in ((__system_config_package_replacement.stdout | default(''))
+        ~ (__system_config_package_replacement.stderr | default('')))
+      or 'Downgrading' in ((__system_config_package_replacement.stdout | default(''))
+        ~ (__system_config_package_replacement.stderr | default('')))
+    )
+
 - name: Packages | Install DNF packages
   when: (system_config_packages | default([])) | length > 0
   ansible.builtin.dnf5:
