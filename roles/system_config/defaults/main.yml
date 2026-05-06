@@ -40,6 +40,17 @@ system_config_copr_repositories: []
 
 system_config_packages: []
 
+# Replace conflicting distro packages in one transaction (runs before system_config_packages).
+# DNF must resolve the install package name (configure repos here or elsewhere like any install).
+# system_config_package_replacements:
+#   - remove: libva-intel-media-driver
+#     install: intel-media-driver
+#   - remove: ffmpeg-free
+#     install: ffmpeg
+#     # allowerasing: true
+
+system_config_package_replacements: []
+
 # system_config_v4l2loopback: true
 system_config_v4l2loopback: false
 system_config_v4l2loopback_devices: 1

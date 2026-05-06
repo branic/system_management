@@ -99,6 +99,29 @@ argument_specs:
         description:
           - "A list of packages to install via DNF."
           - "The full list is passed to dnf5 in a single transaction."
+      system_config_package_replacements:
+        type: "list"
+        elements: "dict"
+        required: false
+        description:
+          - "Pairs of packages to exchange using C(dnf swap), before C(system_config_packages) runs."
+          - "Each swap removes C(remove) and installs C(install) in one transaction."
+          - "Swaps run only when C(remove) is currently installed (idempotent)."
+          - "The C(install) name must be visible to DNF when the task runs (same as installing any package—use this role's repo variables or repos already on the host)."
+        options:
+          remove:
+            type: "str"
+            required: true
+            description: "Installed package name to remove."
+          install:
+            type: "str"
+            required: true
+            description: "Replacement package name to install."
+          allowerasing:
+            type: "bool"
+            required: false
+            default: false
+            description: "Pass C(--allowerasing) to C(dnf) when dependency resolution requires erasing packages."
       system_config_v4l2loopback:
         type: "bool"
         required: false
