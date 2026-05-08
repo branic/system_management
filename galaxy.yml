@@ -14,6 +14,7 @@ description: Fedora Linux system configuration and management
 license_file: LICENSE
 tags: ["linux", "tools", "fedora"]
 dependencies:
+  "ansible.posix": ">=1.5.0"
   "community.general": ">=8.0.0"
 
 repository: https://github.com/branic/system_management

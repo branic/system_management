@@ -20,7 +20,7 @@ PEP440 is the schema used to describe the versions of Ansible.
 
 Some modules and plugins require external libraries. Please check the requirements for each plugin or module you use in the documentation to find out which requirements are needed.
 
-When you install this collection with Ansible Galaxy, declared dependencies are installed as well. This collection depends on **`community.general` >=8.0.0** (see `galaxy.yml`).
+When you install this collection with Ansible Galaxy, declared dependencies are installed as well. This collection depends on **`ansible.posix` >=1.5.0** and **`community.general` >=8.0.0** (see `galaxy.yml`).
 
 ## Included content
 

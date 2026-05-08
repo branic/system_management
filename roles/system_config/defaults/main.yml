@@ -51,6 +51,13 @@ system_config_packages: []
 
 system_config_package_replacements: []
 
+# system_config_sysctl:
+#   - name: vm.swappiness
+#     value: "10"
+# Persisted under system_config_sysctl_file (default /etc/sysctl.d/99-system_config.conf).
+system_config_sysctl: []
+system_config_sysctl_file: /etc/sysctl.d/99-system_config.conf
+
 # system_config_v4l2loopback: true
 system_config_v4l2loopback: false
 system_config_v4l2loopback_devices: 1

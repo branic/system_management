@@ -1,0 +1,11 @@
+---
+- name: Sysctl | Ensure sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+    sysctl_file: "{{ item.sysctl_file | default(system_config_sysctl_file) }}"
+    reload: "{{ item.reload | default(true) }}"
+  loop: "{{ system_config_sysctl }}"
+  loop_control:
+    label: "{{ item.name }}"
