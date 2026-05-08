@@ -11,6 +11,7 @@ argument_specs:
         minimums, optionally prunes stale bundle caches, and can maintain bash completion in ~/.bashrc.
     author:
       - Brant Evans
+    version_added: "1.0.0"
     options:
       openshift_local_manage_bashrc_completion:
         type: bool

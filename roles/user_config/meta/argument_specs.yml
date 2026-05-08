@@ -6,6 +6,7 @@ argument_specs:
       - Configures the Ansible connection user's environment preferences.
     author:
       - Brant Evans
+    version_added: "1.0.0"
     options:
       user_config_slack_flatpak_sockets:
         type: bool

@@ -6,6 +6,7 @@ argument_specs:
       - Installs or updates CLIs under install_cloud_clis_bin_dir (defaults at runtime to ~/.local/bin under ansible_facts user_dir after the role gathers facts).
     author:
       - Brant Evans
+    version_added: "1.0.0"
     options:
       install_cloud_clis_components:
         type: list
