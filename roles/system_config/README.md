@@ -7,6 +7,7 @@ System-wide configuration for **Fedora Linux**-style hosts:
 - **DNF packages** (installed via `dnf5`)
 - optional **RPM replacements** (`dnf swap`), for example `ffmpeg-free` → `ffmpeg`, or `libva-intel-media-driver` → `intel-media-driver` when both names exist in DNF
 - optional **`sysctl`** parameters via `ansible.posix.sysctl`, persisted under `/etc/sysctl.d/` by default
+- optional **systemd units** (system scope) via `ansible.builtin.systemd_service`
 - local **groups** and **users**
 - **Flatpak**
   - **Flathub** remote
@@ -32,6 +33,7 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `system_config_package_replacements` | Optional list of `dnf swap` pairs: `remove` and `install` (required); optional `allowerasing` (default false). Runs after repos are configured and before `system_config_packages`; skipped when `remove` is not installed. DNF only needs to resolve `install`—same as any package install, regardless of which repository provides it. |
 | `system_config_sysctl_file` | Default sysctl drop-in path for entries that do not set `sysctl_file` (default `/etc/sysctl.d/99-system_config.conf`). |
 | `system_config_sysctl` | Optional list of sysctl definitions: `name` (required); `value` (required when `state` is `present`); optional `state` (`present` / `absent`), `sysctl_file`, `reload` (default true). Runs after package/repo tasks and before Flatpak. |
+| `system_config_systemd_units` | Optional list of systemd units (system manager): `name` (required); at least one of `enabled` or `state` per entry; optional `masked`, `daemon_reload` (default false). `state` values: `started`, `stopped`, `restarted`, `reloaded`. Runs after sysctl and before Flatpak. |
 | `system_config_flatpak_packages` | List of Flatpak application IDs to install |
 | `system_config_groups` | Optional list of group definitions: `name` (required), optional `gid`, `system`. |
 | `system_config_users` | Optional list of user definitions: `name` (required); optional `uid`, `comment`, `groups`, `shell`, `system`, `create_home`, `password`, `update_password` (`on_create` / `always`). |
@@ -83,6 +85,10 @@ With variables:
         system_config_sysctl:
           - name: vm.swappiness
             value: "10"
+        system_config_systemd_units:
+          - name: nginx.service
+            enabled: true
+            state: started
         system_config_flatpak_packages:
           - org.videolan.VLC
         system_config_groups:
@@ -96,7 +102,7 @@ With variables:
 
 ## Idempotency and check mode
 
-Repository, package, sysctl, group, user, and Flatpak remote tasks are intended to be idempotent. RPM replacement tasks use `dnf swap` via `ansible.builtin.command` when the package being removed is installed; they are skipped in Ansible check mode (same as other `command` tasks without `creates`/`removes`). DNF package installs use `state: present`; Flatpak installs use `state: latest` -- review whether that matches your change expectations.
+Repository, package, sysctl, systemd, group, user, and Flatpak remote tasks are intended to be idempotent. RPM replacement tasks use `dnf swap` via `ansible.builtin.command` when the package being removed is installed; they are skipped in Ansible check mode (same as other `command` tasks without `creates`/`removes`). DNF package installs use `state: present`; Flatpak installs use `state: latest` -- review whether that matches your change expectations.
 
 ## License
 

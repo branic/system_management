@@ -181,3 +181,45 @@ argument_specs:
         default: ""
         description:
           - Path to the cursor executable. When empty, the role uses command -v cursor.
+
+      user_config_systemd_units:
+        type: list
+        elements: dict
+        required: false
+        description:
+          - Systemd units to manage in the user scope (C(systemctl --user)).
+          - Each entry must set name. At least one of enabled or state is required per entry.
+          - Requires a user D-Bus session and XDG_RUNTIME_DIR (interactive login or logind lingering); otherwise systemctl --user may fail.
+        options:
+          name:
+            type: str
+            required: true
+            description:
+              - Unit name (for example keyboxd.socket).
+          enabled:
+            type: bool
+            required: false
+            description:
+              - Whether the unit should start on boot for the user (enable/disable).
+              - Omit when only managing state or masked.
+          state:
+            type: str
+            required: false
+            choices:
+              - started
+              - stopped
+              - restarted
+              - reloaded
+            description:
+              - Active unit state for the user manager.
+              - Use started with enabled true for systemctl enable --now behavior.
+          masked:
+            type: bool
+            required: false
+            description: Whether the unit should be masked for the user.
+          daemon_reload:
+            type: bool
+            required: false
+            default: false
+            description:
+              - Run systemctl daemon-reload before other operations for this unit (user scope).

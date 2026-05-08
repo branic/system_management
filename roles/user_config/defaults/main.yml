@@ -46,3 +46,12 @@ user_config_vscode_cli: ""
 
 # Full path to the Cursor `cursor` binary; empty uses `command -v cursor`.
 user_config_cursor_cli: ""
+
+# systemd units (user scope / systemctl --user). Each item: name (required); at least one of enabled or state;
+# optional masked, daemon_reload (default false). Requires user dbus and XDG_RUNTIME_DIR (login session or lingering).
+# Example:
+# user_config_systemd_units:
+#   - name: keyboxd.socket
+#     enabled: true
+#     state: started
+user_config_systemd_units: []

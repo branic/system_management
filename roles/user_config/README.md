@@ -9,6 +9,7 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - [uv](https://docs.astral.sh/uv/) Python package manager (standalone installer)
 - Python tool installation via uv
 - VS Code and Cursor editor extensions (via `code` / `cursor` CLI)
+- optional **user systemd units** (`systemctl --user`) via `ansible.builtin.systemd_service`
 
 ## Requirements
 
@@ -24,6 +25,7 @@ Configure per-user desktop settings for the **user that runs this role** (the SS
 - The role **always** runs **`setup`** with a minimal subset (`!all` + `min`) as its first task so **`ansible_facts['user_dir']`** matches the **effective** user for the role (including **`become_user`**). That avoids stale `user_dir` values from an earlier play-level `gather_facts` that ran as the SSH user while the role runs as someone else.
 - Paths use **`ansible_facts['user_dir']`**. File **`owner`** / **`group`** use **`ansible_facts['user_id']`** and **`ansible_facts['user_gid']`** (same minimal `setup` as `user_dir`), so ownership matches the **effective** user (including **`become_user`**), not the SSH connection user.
 - Using **`become_user`** (for example connect as `ansible`, become `brant`) is supported for targeting that user's home. Arbitrary `become` to root while configuring another account without **`become_user`** is still not what this role assumes.
+- **User systemd** (`user_config_systemd_units`) needs the effective user's D-Bus user session and `XDG_RUNTIME_DIR` (normal graphical or SSH login, or **logind lingering**). Headless runs without a session often fail with errors such as “Failed to connect to bus”.
 
 ## Role variables
 
@@ -45,6 +47,7 @@ See `defaults/main.yml` and `meta/argument_specs.yml` for the full specification
 | `user_config_cursor_extensions` | Cursor extensions (same string format as VS Code). Uses the `cursor` CLI. Skipped when empty. |
 | `user_config_vscode_cli` | Optional full path to the `code` binary; when empty, `command -v code` is used. |
 | `user_config_cursor_cli` | Optional full path to the `cursor` binary; when empty, `command -v cursor` is used. |
+| `user_config_systemd_units` | Optional list of systemd units for the **user** manager: `name` (required); at least one of `enabled` or `state` per entry; optional `masked`, `daemon_reload` (default false). `state`: `started`, `stopped`, `restarted`, `reloaded`. Use `enabled: true` and `state: started` for `systemctl --user enable --now` behavior (for example `keyboxd.socket`). |
 
 ## Dependencies
 
@@ -77,6 +80,10 @@ With variables:
         user_config_slack_flatpak_sockets: true
         user_config_vscode_extensions:
           - redhat.ansible
+        user_config_systemd_units:
+          - name: keyboxd.socket
+            enabled: true
+            state: started
 ```
 
 ## Idempotency and check mode

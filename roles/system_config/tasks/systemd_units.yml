@@ -1,0 +1,11 @@
+---
+- name: Systemd | Ensure system units
+  ansible.builtin.systemd_service:
+    daemon_reload: "{{ item.daemon_reload | default(false) }}"
+    enabled: "{{ item.enabled | default(omit) }}"
+    masked: "{{ item.masked | default(omit) }}"
+    name: "{{ item.name }}"
+    state: "{{ item.state | default(omit) }}"
+  loop: "{{ system_config_systemd_units }}"
+  loop_control:
+    label: "{{ item.name }}"

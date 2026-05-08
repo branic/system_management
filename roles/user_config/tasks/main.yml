@@ -21,6 +21,11 @@
   ansible.builtin.include_tasks:
     file: flatpak.yml
 
+- name: Include systemd user unit tasks
+  when: (user_config_systemd_units | default([])) | length > 0
+  ansible.builtin.include_tasks:
+    file: systemd_units.yml
+
 - name: Include GTK tasks
   ansible.builtin.include_tasks:
     file: gtk.yml
