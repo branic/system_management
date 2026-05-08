@@ -21,7 +21,7 @@ __metaclass__ = type  # pylint: disable=C0103
 DOCUMENTATION = """
     name: to_gnome_clocks
     author: Brant Evans
-    version_added: "1.1.0"
+    version_added: "1.0.0"
     short_description: Convert a list of locations to a GNOME world-clocks GVariant string.
     description:
       - Accepts a list of location dictionaries and produces the GVariant string

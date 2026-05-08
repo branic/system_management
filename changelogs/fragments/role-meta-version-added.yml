@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - Normalize role ``meta/main.yml``; ``version_added: 1.0.0`` on argument specs.

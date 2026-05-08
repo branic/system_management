@@ -6,6 +6,7 @@ argument_specs:
       - This role configures a Fedora Linux system.
     author:
       - Brant Evans
+    version_added: "1.0.0"
     options:
       system_config_rpmfusion:
         type: "str"
