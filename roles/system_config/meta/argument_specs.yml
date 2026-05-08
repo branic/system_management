@@ -236,3 +236,47 @@ argument_specs:
               - "on_create"
               - "always"
             description: "When to update the users password."
+      system_config_sysctl_file:
+        type: "str"
+        required: false
+        default: "/etc/sysctl.d/99-system_config.conf"
+        description:
+          - "Path to the sysctl drop-in file used when an entry does not set C(sysctl_file)."
+          - "Typically under C(/etc/sysctl.d/) so settings persist across reboots."
+      system_config_sysctl:
+        type: "list"
+        elements: "dict"
+        required: false
+        description:
+          - "Sysctl parameters to manage via C(ansible.posix.sysctl)."
+          - "Entries are written to C(system_config_sysctl_file) unless overridden per entry."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "Sysctl parameter name (for example C(vm.swappiness))."
+          value:
+            type: "raw"
+            required: false
+            description:
+              - "Value to set when C(state) is C(present)."
+              - "Required when C(state) is C(present)."
+          state:
+            type: "str"
+            required: false
+            default: "present"
+            choices:
+              - "present"
+              - "absent"
+            description: "Whether the parameter should be set in the sysctl file or removed."
+          sysctl_file:
+            type: "str"
+            required: false
+            description:
+              - "Override C(system_config_sysctl_file) for this entry only."
+          reload:
+            type: "bool"
+            required: false
+            default: true
+            description:
+              - "Whether to reload sysctl immediately (C(sysctl -p)) after changing the file."

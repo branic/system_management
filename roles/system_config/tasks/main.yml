@@ -20,6 +20,11 @@
   ansible.builtin.include_tasks:
     file: packages.yml
 
+- name: Include sysctl tasks
+  when: (system_config_sysctl | default([])) | length > 0
+  ansible.builtin.include_tasks:
+    file: sysctl.yml
+
 - name: Include Flatpak tasks
   ansible.builtin.include_tasks:
     file: flatpak.yml
