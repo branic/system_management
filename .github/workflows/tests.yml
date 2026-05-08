@@ -17,7 +17,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   changelog:
-    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@17784d5248b78835d2f2488211367e8de5a95381
+    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
     if: github.event_name == 'pull_request'
   build-import:
     uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
