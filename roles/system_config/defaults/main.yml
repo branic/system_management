@@ -58,6 +58,14 @@ system_config_package_replacements: []
 system_config_sysctl: []
 system_config_sysctl_file: /etc/sysctl.d/99-system_config.conf
 
+# systemd units (system scope). Each item: name (required); at least one of enabled or state;
+# optional masked, daemon_reload (default false). Example:
+# system_config_systemd_units:
+#   - name: nginx.service
+#     enabled: true
+#     state: started
+system_config_systemd_units: []
+
 # system_config_v4l2loopback: true
 system_config_v4l2loopback: false
 system_config_v4l2loopback_devices: 1

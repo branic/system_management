@@ -281,3 +281,43 @@ argument_specs:
             default: true
             description:
               - "Whether to reload sysctl immediately (C(sysctl -p)) after changing the file."
+      system_config_systemd_units:
+        type: "list"
+        elements: "dict"
+        required: false
+        description:
+          - "Systemd units to manage in the system scope (C(systemctl), default scope)."
+          - "Each entry must set C(name). At least one of C(enabled) or C(state) is required per entry."
+          - "Runs after sysctl tasks and before Flatpak."
+        options:
+          name:
+            type: "str"
+            required: true
+            description: "Unit name (for example C(nginx.service) or C(sshd.socket))."
+          enabled:
+            type: "bool"
+            required: false
+            description:
+              - "Whether the unit should start on boot (enable/disable)."
+              - "Omit when only managing C(state) or C(masked)."
+          state:
+            type: "str"
+            required: false
+            choices:
+              - "started"
+              - "stopped"
+              - "restarted"
+              - "reloaded"
+            description:
+              - "Active unit state."
+              - "Use C(started) with C(enabled) true for C(systemctl enable --now) behavior."
+          masked:
+            type: "bool"
+            required: false
+            description: "Whether the unit should be masked."
+          daemon_reload:
+            type: "bool"
+            required: false
+            default: false
+            description:
+              - "Run C(systemctl daemon-reload) before other operations for this unit."
