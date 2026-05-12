@@ -5,7 +5,7 @@
 
 namespace: "branic"
 name: "system_management"
-version: 1.0.0
+version: 1.1.0
 readme: README.md
 authors:
   - Brant Evans <bevans@redhat.com>

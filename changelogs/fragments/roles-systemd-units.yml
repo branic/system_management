@@ -1,3 +1,0 @@
----
-minor_changes:
-  - system_config and user_config roles can manage systemd units (system and user scope).

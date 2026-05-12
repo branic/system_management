@@ -77,3 +77,28 @@ releases:
       - user-config-uv-install.yml
       - user-config-uv-tools.yml
     release_date: '2026-04-16'
+  1.1.0:
+    changes:
+      minor_changes:
+        - Add ``ansible.posix`` collection dependency.
+        - 'Normalize role ``meta/main.yml``; ``version_added: 1.0.0`` on argument
+          specs.'
+        - openshift_local - add optional ``openshift_local_crc_version`` to pin a
+          CRC release (validated before download).
+        - system_config and user_config roles can manage systemd units (system and
+          user scope).
+        - "system_config role \u2014 add ``system_config_package_replacements`` for\
+          \ ``dnf swap`` pairs (optional ``allowerasing``), running after repo setup\
+          \ and before DNF package install."
+        - "system_config role \u2014 add sysctl configuration support."
+      release_summary: Feature release adding systemd unit management, sysctl configuration,
+        and package replacement capabilities.
+    fragments:
+      - 1.1.0_release_summary.yml
+      - openshift-local-crc-version-pin.yml
+      - role-assert-quiet.yml
+      - role-meta-version-added.yml
+      - roles-systemd-units.yml
+      - system-config-package-replacements.yml
+      - system-config-sysctl.yml
+    release_date: '2026-05-12'

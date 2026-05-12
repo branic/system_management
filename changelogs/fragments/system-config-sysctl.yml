@@ -1,4 +1,0 @@
----
-minor_changes:
-  - system_config role — add sysctl configuration support.
-  - Add ``ansible.posix`` collection dependency.

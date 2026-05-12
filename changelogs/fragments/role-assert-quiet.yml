@@ -1,4 +1,0 @@
----
-trivial:
-  - >-
-    install_cloud_clis, secureboot_signing, user_config — set ``quiet: true`` on ``assert`` tasks.

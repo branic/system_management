@@ -2,20 +2,41 @@
 
 **Topics**
 
-- <a href="#v1-0-0">v1\.0\.0</a>
+- <a href="#v1-1-0">v1\.1\.0</a>
     - <a href="#release-summary">Release Summary</a>
     - <a href="#minor-changes">Minor Changes</a>
+- <a href="#v1-0-0">v1\.0\.0</a>
+    - <a href="#release-summary-1">Release Summary</a>
+    - <a href="#minor-changes-1">Minor Changes</a>
     - <a href="#bugfixes">Bugfixes</a>
 
-<a id="v1-0-0"></a>
-## v1\.0\.0
+<a id="v1-1-0"></a>
+## v1\.1\.0
 
 <a id="release-summary"></a>
 ### Release Summary
 
-Initial release of the collection
+Feature release adding systemd unit management\, sysctl configuration\, and package replacement capabilities\.
 
 <a id="minor-changes"></a>
+### Minor Changes
+
+* Add <code>ansible\.posix</code> collection dependency\.
+* Normalize role <code>meta/main\.yml</code>\; <code>version\_added\: 1\.0\.0</code> on argument specs\.
+* openshift\_local \- add optional <code>openshift\_local\_crc\_version</code> to pin a CRC release \(validated before download\)\.
+* system\_config and user\_config roles can manage systemd units \(system and user scope\)\.
+* system\_config role — add <code>system\_config\_package\_replacements</code> for <code>dnf swap</code> pairs \(optional <code>allowerasing</code>\)\, running after repo setup and before DNF package install\.
+* system\_config role — add sysctl configuration support\.
+
+<a id="v1-0-0"></a>
+## v1\.0\.0
+
+<a id="release-summary-1"></a>
+### Release Summary
+
+Initial release of the collection
+
+<a id="minor-changes-1"></a>
 ### Minor Changes
 
 * Add <code>openshift\_local</code> role to install or upgrade OpenShift Local \(CRC\) with optional host checks\, configurable <code>crc</code> settings\, and <code>\~/\.bashrc</code> completion\.

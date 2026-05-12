@@ -1,3 +1,0 @@
----
-minor_changes:
-  - openshift_local - add optional ``openshift_local_crc_version`` to pin a CRC release (validated before download).
