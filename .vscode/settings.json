@@ -3,5 +3,6 @@
         "branic",
         "bevans",
         "dconf"
-    ]
+    ],
+    "ansible.executionEnvironment.enabled": false
 }

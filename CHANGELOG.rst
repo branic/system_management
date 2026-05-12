@@ -4,6 +4,24 @@ Branic System Management Collection Release Notes
 
 .. contents:: Topics
 
+v1.1.0
+======
+
+Release Summary
+---------------
+
+Feature release adding systemd unit management, sysctl configuration, and package replacement capabilities.
+
+Minor Changes
+-------------
+
+- Add ``ansible.posix`` collection dependency.
+- Normalize role ``meta/main.yml``; ``version_added: 1.0.0`` on argument specs.
+- openshift_local - add optional ``openshift_local_crc_version`` to pin a CRC release (validated before download).
+- system_config and user_config roles can manage systemd units (system and user scope).
+- system_config role — add ``system_config_package_replacements`` for ``dnf swap`` pairs (optional ``allowerasing``), running after repo setup and before DNF package install.
+- system_config role — add sysctl configuration support.
+
 v1.0.0
 ======
 
