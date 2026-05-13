@@ -2,6 +2,7 @@
 install_cloud_clis_components:
   - aws
   - oc
+  - ocm
   - rosa
   - tekton
   - kube_linter

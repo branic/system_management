@@ -12,6 +12,13 @@ if command -v oc &>/dev/null; then
 fi
 
 {% endif %}
+{% if 'ocm' in install_cloud_clis_components %}
+if command -v ocm &>/dev/null; then
+    # shellcheck source=/dev/null
+    source <(ocm completion bash)
+fi
+
+{% endif %}
 {% if 'rosa' in install_cloud_clis_components %}
 if command -v rosa &>/dev/null; then
     # shellcheck source=/dev/null

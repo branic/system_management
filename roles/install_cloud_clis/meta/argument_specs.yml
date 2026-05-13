@@ -15,6 +15,7 @@ argument_specs:
         default:
           - aws
           - oc
+          - ocm
           - rosa
           - tekton
           - kube_linter
@@ -22,7 +23,7 @@ argument_specs:
           - stern
           - helm
         description:
-          - Which CLIs to install or update. Allowed values are aws, oc, rosa, tekton, kube_linter, kustomize, stern, helm.
+          - Which CLIs to install or update. Allowed values are aws, oc, ocm, rosa, tekton, kube_linter, kustomize, stern, helm.
 
       install_cloud_clis_manage_bashrc_completion:
         type: bool
