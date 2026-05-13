@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - install_cloud_clis role - add OCM CLI (openshift-online/ocm-cli) installation support with bash completion

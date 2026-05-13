@@ -1,0 +1,113 @@
+---
+- name: ocm_cli | Retrieve OCM CLI releases from GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/openshift-online/ocm-cli/releases?per_page=100
+  register: __install_cloud_clis_ocm_cli_releases
+
+- name: ocm_cli | List GA releases with semver tag names
+  ansible.builtin.set_fact:
+    __install_cloud_clis_ocm_ga_releases: >-
+      {{ __install_cloud_clis_ocm_cli_releases.json
+         | selectattr('prerelease', 'equalto', false)
+         | selectattr('draft', 'equalto', false)
+         | selectattr('tag_name', 'match', '^v([0-9.]+)$')
+         | list }}
+
+- name: ocm_cli | Determine highest semver among GA releases
+  ansible.builtin.set_fact:
+    __install_cloud_clis_ocm_highest_semver: >-
+      {{ (__install_cloud_clis_ocm_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^v', '')
+         | list
+         | community.general.version_sort
+         | last) }}
+
+- name: ocm_cli | Determine latest OCM GA release details
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_ocm_cli_ver_details: >-
+      {{ __install_cloud_clis_ocm_ga_releases
+         | selectattr('tag_name', 'equalto', 'v' ~ __install_cloud_clis_ocm_highest_semver)
+         | first }}
+
+- name: ocm_cli | Assert a matching GA OCM CLI release was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_ocm_cli_ver_details is defined
+      - __install_cloud_clis_latest_ocm_cli_ver_details['tag_name'] is defined
+    fail_msg: >-
+      Could not resolve a GA OCM CLI release for the highest semver (check API response and tag format).
+    quiet: true
+
+- name: ocm_cli | Determine latest OCM CLI version
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_ocm_cli_ver: >-
+      {{ __install_cloud_clis_latest_ocm_cli_ver_details['tag_name'] |
+         regex_replace('^v(?P<version>[0-9.]+)$', '\g<version>')
+      }}
+
+- name: ocm_cli | Determine latest OCM CLI download URL
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_ocm_cli_url: >-
+      {{ __install_cloud_clis_latest_ocm_cli_ver_details['assets'] |
+         selectattr('name', 'equalto', 'ocm-linux-amd64') |
+         map(attribute='browser_download_url') |
+         first
+      }}
+
+- name: ocm_cli | Check if OCM CLI binary installed
+  ansible.builtin.stat:
+    path: "{{ install_cloud_clis_bin_dir }}/ocm"
+  register: __install_cloud_clis_ocm_cli_installed
+
+- name: ocm_cli | Check OCM CLI versions (Block)
+  when: __install_cloud_clis_ocm_cli_installed.stat.exists
+  block:
+    - name: ocm_cli | Retrieve installed OCM CLI version
+      ansible.builtin.command:
+        cmd: ocm version
+      register: __install_cloud_clis_ocm_ver_installed_result
+      changed_when: false
+
+    - name: ocm_cli | Determine installed OCM CLI version
+      ansible.builtin.set_fact:
+        __install_cloud_clis_installed_ocm_cli_ver: >-
+          {{ __install_cloud_clis_ocm_ver_installed_result.stdout | trim }}
+
+- name: ocm_cli | Display OCM CLI version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ __install_cloud_clis_installed_ocm_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_ocm_cli_ver }}",
+        "URL for latest version: {{ __install_cloud_clis_latest_ocm_cli_url }}"
+      ]
+    verbosity: 1
+
+- name: ocm_cli | Update OCM CLI executable (Block)
+  when: >-
+    (not __install_cloud_clis_ocm_cli_installed.stat.exists)
+    or (
+      __install_cloud_clis_installed_ocm_cli_ver is defined
+      and __install_cloud_clis_installed_ocm_cli_ver is version(__install_cloud_clis_latest_ocm_cli_ver, '<')
+    )
+  block:
+    - name: ocm_cli | Download OCM CLI executable
+      ansible.builtin.get_url:
+        url: "{{ __install_cloud_clis_latest_ocm_cli_url }}"
+        dest: "{{ install_cloud_clis_bin_dir }}/ocm"
+        mode: "0755"
+
+    - name: ocm_cli | Add updated message
+      when: >-
+        __install_cloud_clis_installed_ocm_cli_ver is defined
+        and __install_cloud_clis_installed_ocm_cli_ver is version(__install_cloud_clis_latest_ocm_cli_ver, '<')
+      ansible.builtin.set_fact:
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated OCM CLI from " + __install_cloud_clis_installed_ocm_cli_ver + " to " + __install_cloud_clis_latest_ocm_cli_ver] }}
+
+    - name: ocm_cli | Add installed message
+      when: not __install_cloud_clis_ocm_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed OCM CLI"] }}

@@ -28,6 +28,11 @@
       ansible.builtin.include_tasks:
         file: oc_cli.yml
 
+    - name: Install OCM CLI
+      when: "'ocm' in install_cloud_clis_components"
+      ansible.builtin.include_tasks:
+        file: ocm_cli.yml
+
     - name: Install ROSA CLI
       when: "'rosa' in install_cloud_clis_components"
       ansible.builtin.include_tasks:

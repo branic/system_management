@@ -8,6 +8,7 @@
   loop:
     - "^command -v aws &>/dev/null && complete -C .* aws$"
     - '^command -v oc &>/dev/null && source <\(oc completion bash\)$'
+    - '^command -v ocm &>/dev/null && source <\(ocm completion bash\)$'
     - '^command -v rosa &>/dev/null && source <\(rosa completion bash\)$'
     - '^command -v tkn &>/dev/null && source <\(tkn completion bash\)$'
     - '^command -v kube-linter &>/dev/null && source <\(kube-linter completion bash\)$'
