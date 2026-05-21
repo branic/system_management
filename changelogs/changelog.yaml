@@ -102,3 +102,29 @@ releases:
       - system-config-package-replacements.yml
       - system-config-sysctl.yml
     release_date: '2026-05-12'
+  1.2.0:
+    changes:
+      bugfixes:
+        - install_cloud_clis role - resolve ROSA CLI install version from mirror.openshift.com
+          availability so a GitHub release ahead of the mirror does not fail the play
+      minor_changes:
+        - install_cloud_clis role - add Google Workspace CLI (gws) installation from
+          GitHub releases
+        - install_cloud_clis role - add OCM CLI (openshift-online/ocm-cli) installation
+          support with bash completion
+        - install_cloud_clis role - isolate each CLI install in block/rescue so one
+          component failure does not block remaining installs
+        - install_cloud_clis role - loop CLI installs from install_cloud_clis_cli_installers
+          to reduce duplicated task definitions in main.yml
+      release_summary: 'Extends install_cloud_clis with OCM and Google Workspace CLIs,
+        hardens ROSA
+
+        installs against mirror lag, and isolates per-CLI failures.
+
+        '
+    fragments:
+      - 1.2.0_release_summary.yml
+      - install-cloud-clis-gws-cli.yml
+      - install-cloud-clis-ocm-cli.yml
+      - install-cloud-clis-rosa-mirror-probe.yml
+    release_date: '2026-05-21'

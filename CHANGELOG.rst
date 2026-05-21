@@ -4,6 +4,28 @@ Branic System Management Collection Release Notes
 
 .. contents:: Topics
 
+v1.2.0
+======
+
+Release Summary
+---------------
+
+Extends install_cloud_clis with OCM and Google Workspace CLIs, hardens ROSA
+installs against mirror lag, and isolates per-CLI failures.
+
+Minor Changes
+-------------
+
+- install_cloud_clis role - add Google Workspace CLI (gws) installation from GitHub releases
+- install_cloud_clis role - add OCM CLI (openshift-online/ocm-cli) installation support with bash completion
+- install_cloud_clis role - isolate each CLI install in block/rescue so one component failure does not block remaining installs
+- install_cloud_clis role - loop CLI installs from install_cloud_clis_cli_installers to reduce duplicated task definitions in main.yml
+
+Bugfixes
+--------
+
+- install_cloud_clis role - resolve ROSA CLI install version from mirror.openshift.com availability so a GitHub release ahead of the mirror does not fail the play
+
 v1.1.0
 ======
 
