@@ -1,0 +1,12 @@
+---
+- name: Install CLI component block
+  block:
+    - name: Run CLI install tasks
+      ansible.builtin.include_tasks:
+        file: "{{ install_cloud_clis_cli.tasks_file }}"
+  rescue:
+    - name: Record skipped CLI install
+      ansible.builtin.set_fact:
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages
+             + [install_cloud_clis_cli.label + ": skipped (" + (ansible_failed_result.msg | default('unknown error')) + ")"] }}

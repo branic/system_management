@@ -2,3 +2,36 @@
 # vars file for install_cloud_clis
 
 install_cloud_clis_update_messages: []
+
+# Install order: used by main.yml and bashrc completion block ordering.
+install_cloud_clis_cli_installers:
+  - component: aws
+    label: AWS CLI
+    tasks_file: aws_cli.yml
+  - component: oc
+    label: OC CLI
+    tasks_file: oc_cli.yml
+  - component: ocm
+    label: OCM CLI
+    tasks_file: ocm_cli.yml
+  - component: rosa
+    label: ROSA CLI
+    tasks_file: rosa_cli.yml
+  - component: tekton
+    label: Tekton CLI
+    tasks_file: tekton_cli.yml
+  - component: kube_linter
+    label: kube-linter
+    tasks_file: kube-linter.yml
+  - component: kustomize
+    label: kustomize
+    tasks_file: kustomize.yml
+  - component: stern
+    label: stern
+    tasks_file: stern.yml
+  - component: helm
+    label: Helm
+    tasks_file: helm.yml
+  - component: gws
+    label: Google Workspace CLI
+    tasks_file: gws_cli.yml

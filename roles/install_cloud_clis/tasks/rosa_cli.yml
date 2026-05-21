@@ -13,9 +13,17 @@
          | selectattr('tag_name', 'match', '^v([0-9.]+)$')
          | list }}
 
-- name: rosa_cli | Determine highest semver among GA releases
+- name: rosa_cli | Assert at least one GA ROSA CLI release was returned from GitHub
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_rosa_ga_releases | length > 0
+    fail_msg: >-
+      Could not resolve any GA ROSA CLI releases from GitHub (check API response and tag format).
+    quiet: true
+
+- name: rosa_cli | Determine highest semver among GA releases (GitHub)
   ansible.builtin.set_fact:
-    __install_cloud_clis_rosa_highest_semver: >-
+    __install_cloud_clis_rosa_github_highest_semver: >-
       {{ (__install_cloud_clis_rosa_ga_releases
          | map(attribute='tag_name')
          | map('regex_replace', '^v', '')
@@ -23,28 +31,47 @@
          | community.general.version_sort
          | last) }}
 
-- name: rosa_cli | Determine latest ROSA GA release details
+- name: rosa_cli | Build GA release versions sorted newest first
   ansible.builtin.set_fact:
-    __install_cloud_clis_latest_rosa_cli_ver_details: >-
-      {{ __install_cloud_clis_rosa_ga_releases
-         | selectattr('tag_name', 'equalto', 'v' ~ __install_cloud_clis_rosa_highest_semver)
-         | first }}
+    __install_cloud_clis_rosa_ga_versions_sorted: >-
+      {{ (__install_cloud_clis_rosa_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^v', '')
+         | list
+         | community.general.version_sort
+         | reverse
+         | list) }}
 
-- name: rosa_cli | Assert a matching GA ROSA CLI release was resolved
-  ansible.builtin.assert:
-    that:
-      - __install_cloud_clis_latest_rosa_cli_ver_details is defined
-      - __install_cloud_clis_latest_rosa_cli_ver_details['tag_name'] is defined
-    fail_msg: >-
-      Could not resolve a GA ROSA CLI release for the highest semver (check API response and tag format).
-    quiet: true
+- name: rosa_cli | Probe mirror for available ROSA CLI versions
+  ansible.builtin.uri:
+    url: "https://mirror.openshift.com/pub/cgw/rosa/{{ item }}/rosa-linux.tar.gz"
+    method: HEAD
+    status_code: [200, 404]
+  loop: "{{ __install_cloud_clis_rosa_ga_versions_sorted[:10] }}"
+  register: __install_cloud_clis_rosa_mirror_probe
 
-- name: rosa_cli | Determine latest ROSA CLI version
+- name: rosa_cli | Determine latest mirror-available ROSA CLI version
   ansible.builtin.set_fact:
     __install_cloud_clis_latest_rosa_cli_ver: >-
-      {{ __install_cloud_clis_latest_rosa_cli_ver_details['tag_name'] |
-         regex_replace('^v(?P<version>[0-9.]+)$', '\g<version>')
-      }}
+      {{ (__install_cloud_clis_rosa_mirror_probe.results
+         | selectattr('status', 'equalto', 200)
+         | map(attribute='item')
+         | first) | default('', true) }}
+
+- name: rosa_cli | Assert a mirror-available ROSA CLI version was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_rosa_cli_ver | length > 0
+    fail_msg: >-
+      Could not find any GA ROSA CLI release on mirror.openshift.com (checked the 10 newest GitHub GA versions).
+    quiet: true
+
+- name: rosa_cli | Warn when GitHub latest exceeds mirror availability
+  when: __install_cloud_clis_rosa_github_highest_semver != __install_cloud_clis_latest_rosa_cli_ver
+  ansible.builtin.debug:
+    msg: >-
+      ROSA CLI {{ __install_cloud_clis_rosa_github_highest_semver }} is on GitHub but not yet on
+      mirror.openshift.com; using {{ __install_cloud_clis_latest_rosa_cli_ver }}.
 
 - name: rosa_cli | Check if ROSA CLI binary installed
   ansible.builtin.stat:
@@ -74,6 +101,7 @@
       [
         "Installed Version: {{ __install_cloud_clis_installed_rosa_cli_ver | default('NOT INSTALLED') }}",
         "Latest Version:    {{ __install_cloud_clis_latest_rosa_cli_ver | default('UNKNOWN') }}",
+        "GitHub Latest:     {{ __install_cloud_clis_rosa_github_highest_semver | default('UNKNOWN') }}",
       ]
     verbosity: 1
 
