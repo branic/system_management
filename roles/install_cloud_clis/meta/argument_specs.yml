@@ -22,8 +22,9 @@ argument_specs:
           - kustomize
           - stern
           - helm
+          - gws
         description:
-          - Which CLIs to install or update. Allowed values are aws, oc, ocm, rosa, tekton, kube_linter, kustomize, stern, helm.
+          - Which CLIs to install or update. Allowed values are aws, oc, ocm, rosa, tekton, kube_linter, kustomize, stern, helm, gws.
 
       install_cloud_clis_manage_bashrc_completion:
         type: bool

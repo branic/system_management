@@ -9,5 +9,6 @@ install_cloud_clis_components:
   - kustomize
   - stern
   - helm
+  - gws
 
 install_cloud_clis_manage_bashrc_completion: true
