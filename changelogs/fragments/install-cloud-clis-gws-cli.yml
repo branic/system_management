@@ -1,3 +1,0 @@
----
-minor_changes:
-  - install_cloud_clis role - add Google Workspace CLI (gws) installation from GitHub releases

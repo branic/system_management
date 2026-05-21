@@ -2,23 +2,49 @@
 
 **Topics**
 
-- <a href="#v1-1-0">v1\.1\.0</a>
+- <a href="#v1-2-0">v1\.2\.0</a>
     - <a href="#release-summary">Release Summary</a>
     - <a href="#minor-changes">Minor Changes</a>
-- <a href="#v1-0-0">v1\.0\.0</a>
+    - <a href="#bugfixes">Bugfixes</a>
+- <a href="#v1-1-0">v1\.1\.0</a>
     - <a href="#release-summary-1">Release Summary</a>
     - <a href="#minor-changes-1">Minor Changes</a>
-    - <a href="#bugfixes">Bugfixes</a>
+- <a href="#v1-0-0">v1\.0\.0</a>
+    - <a href="#release-summary-2">Release Summary</a>
+    - <a href="#minor-changes-2">Minor Changes</a>
+    - <a href="#bugfixes-1">Bugfixes</a>
 
-<a id="v1-1-0"></a>
-## v1\.1\.0
+<a id="v1-2-0"></a>
+## v1\.2\.0
 
 <a id="release-summary"></a>
 ### Release Summary
 
-Feature release adding systemd unit management\, sysctl configuration\, and package replacement capabilities\.
+Extends install\_cloud\_clis with OCM and Google Workspace CLIs\, hardens ROSA
+installs against mirror lag\, and isolates per\-CLI failures\.
 
 <a id="minor-changes"></a>
+### Minor Changes
+
+* install\_cloud\_clis role \- add Google Workspace CLI \(gws\) installation from GitHub releases
+* install\_cloud\_clis role \- add OCM CLI \(openshift\-online/ocm\-cli\) installation support with bash completion
+* install\_cloud\_clis role \- isolate each CLI install in block/rescue so one component failure does not block remaining installs
+* install\_cloud\_clis role \- loop CLI installs from install\_cloud\_clis\_cli\_installers to reduce duplicated task definitions in main\.yml
+
+<a id="bugfixes"></a>
+### Bugfixes
+
+* install\_cloud\_clis role \- resolve ROSA CLI install version from mirror\.openshift\.com availability so a GitHub release ahead of the mirror does not fail the play
+
+<a id="v1-1-0"></a>
+## v1\.1\.0
+
+<a id="release-summary-1"></a>
+### Release Summary
+
+Feature release adding systemd unit management\, sysctl configuration\, and package replacement capabilities\.
+
+<a id="minor-changes-1"></a>
 ### Minor Changes
 
 * Add <code>ansible\.posix</code> collection dependency\.
@@ -31,12 +57,12 @@ Feature release adding systemd unit management\, sysctl configuration\, and pack
 <a id="v1-0-0"></a>
 ## v1\.0\.0
 
-<a id="release-summary-1"></a>
+<a id="release-summary-2"></a>
 ### Release Summary
 
 Initial release of the collection
 
-<a id="minor-changes-1"></a>
+<a id="minor-changes-2"></a>
 ### Minor Changes
 
 * Add <code>openshift\_local</code> role to install or upgrade OpenShift Local \(CRC\) with optional host checks\, configurable <code>crc</code> settings\, and <code>\~/\.bashrc</code> completion\.
@@ -57,7 +83,7 @@ Initial release of the collection
 * user\_config role \- add optional uv installation via the standalone installer
 * user\_config role \- replace hard\-coded dconf tasks with the <code>user\_config\_dconf\_settings</code> variable
 
-<a id="bugfixes"></a>
+<a id="bugfixes-1"></a>
 ### Bugfixes
 
 * fix ansible\_user\_dir deprecation warnings
