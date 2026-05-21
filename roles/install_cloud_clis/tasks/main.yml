@@ -18,55 +18,13 @@
 
 - name: Update CLIs (Block)
   block:
-    - name: Install AWS CLI
-      when: "'aws' in install_cloud_clis_components"
+    - name: Install CLI components
       ansible.builtin.include_tasks:
-        file: aws_cli.yml
-
-    - name: Install OC CLI
-      when: "'oc' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: oc_cli.yml
-
-    - name: Install OCM CLI
-      when: "'ocm' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: ocm_cli.yml
-
-    - name: Install ROSA CLI
-      when: "'rosa' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: rosa_cli.yml
-
-    - name: Install Tekton CLI
-      when: "'tekton' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: tekton_cli.yml
-
-    - name: Install kube-linter
-      when: "'kube_linter' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: kube-linter.yml
-
-    - name: Install kustomize
-      when: "'kustomize' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: kustomize.yml
-
-    - name: Install stern
-      when: "'stern' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: stern.yml
-
-    - name: Install helm
-      when: "'helm' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: helm.yml
-
-    - name: Install Google Workspace CLI
-      when: "'gws' in install_cloud_clis_components"
-      ansible.builtin.include_tasks:
-        file: gws_cli.yml
+        file: install_cli_component.yml
+      loop: "{{ install_cloud_clis_cli_installers | selectattr('component', 'in', install_cloud_clis_components) | list }}"
+      loop_control:
+        loop_var: install_cloud_clis_cli
+        label: "{{ install_cloud_clis_cli.label }}"
 
   always:
     - name: Refresh .bashrc completion block

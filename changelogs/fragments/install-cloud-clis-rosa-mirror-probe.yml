@@ -1,0 +1,9 @@
+---
+bugfixes:
+  - install_cloud_clis role - resolve ROSA CLI install version from mirror.openshift.com
+    availability so a GitHub release ahead of the mirror does not fail the play
+minor_changes:
+  - install_cloud_clis role - isolate each CLI install in block/rescue so one component
+    failure does not block remaining installs
+  - install_cloud_clis role - loop CLI installs from install_cloud_clis_cli_installers
+    to reduce duplicated task definitions in main.yml

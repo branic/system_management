@@ -21,7 +21,7 @@ Binaries are placed under **`install_cloud_clis_bin_dir`**. If you do not set it
   - **GitHub** (`api.github.com`, `github.com`) — version checks and release assets for most CLIs (including gws, stern, Tekton, kube-linter, kustomize, OCM, and Helm version discovery)
   - **AWS** (`awscli.amazonaws.com`) — AWS CLI installer (tags resolved via GitHub)
   - **Helm** (`get.helm.sh`) — Helm binary download
-  - **OpenShift mirrors** (`mirror.openshift.com`) — oc and rosa CLI binaries (ROSA version also uses GitHub)
+  - **OpenShift mirrors** (`mirror.openshift.com`) — oc and rosa CLI binaries (ROSA semver candidates from GitHub; installable version is the newest GA release present on the mirror)
 - Targets are **x86_64 Linux** (download URLs and archives are fixed for that architecture).
 
 ## Facts and connection
@@ -44,6 +44,11 @@ See [`defaults/main.yml`](defaults/main.yml) (component list) and [`meta/argumen
 ## Dependencies
 
 The **collection** declares a dependency on **`community.general`** (see the collection [`galaxy.yml`](../../galaxy.yml)); Tekton CLI tasks use **`community.general.version_sort`** to pick the highest semantic version among GitHub GA releases.
+
+### ROSA CLI
+
+- **Candidate versions** come from **non-prerelease** GitHub releases (`openshift/rosa`). The role installs the **newest GA version that is already published** on `mirror.openshift.com/pub/cgw/rosa` (probing the ten newest GitHub versions). When GitHub is ahead of the mirror, the play continues and a message notes the lag.
+- A failure in one CLI component (network, mirror, or install error) is **recorded and skipped**; other components in `install_cloud_clis_components` still run.
 
 ### Tekton CLI (`tkn`)
 
@@ -82,7 +87,7 @@ When `install_cloud_clis_manage_bashrc_completion` is `true`, the role writes on
 
 `# BEGIN ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis` and `# END ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis`
 
-The block uses **`if command -v …; then` / `fi`** stanzas and `# shellcheck source=/dev/null` before `source <(…)` completions, matching common interactive shell style. Only CLIs listed in `install_cloud_clis_components` are included, in the same order as installs in this role (`main.yml`).
+The block uses **`if command -v …; then` / `fi`** stanzas and `# shellcheck source=/dev/null` before `source <(…)` completions, matching common interactive shell style. Only CLIs listed in `install_cloud_clis_components` are included, in the same order as `install_cloud_clis_cli_installers` in [`vars/main.yml`](vars/main.yml).
 
 `blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file) and sets **`mode: 0644`** on `.bashrc` when the module updates the file. Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
 
