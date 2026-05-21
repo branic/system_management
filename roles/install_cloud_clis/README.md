@@ -10,13 +10,18 @@ Install and update common **cloud and Kubernetes CLIs** for the **user that runs
 - kustomize
 - stern
 - Helm
+- Google Workspace CLI (`gws`)
 
 Binaries are placed under **`install_cloud_clis_bin_dir`**. If you do not set it, the role assigns **`{{ ansible_facts['user_dir'] }}/.local/bin`** after its first **`setup`** task. The AWS CLI also uses **`install_cloud_clis_aws_install_root`**; if unset, the role sets **`{{ ansible_facts['user_dir'] }}/.local/aws-cli`** when AWS tasks run.
 
 ## Requirements
 
 - Ansible **2.16+** (see [`meta/main.yml`](meta/main.yml)).
-- Outbound **HTTPS** to vendor endpoints (GitHub, AWS, OpenShift mirrors, Helm) when checking and downloading releases.
+- Outbound **HTTPS** when checking and downloading releases:
+  - **GitHub** (`api.github.com`, `github.com`) — version checks and release assets for most CLIs (including gws, stern, Tekton, kube-linter, kustomize, OCM, and Helm version discovery)
+  - **AWS** (`awscli.amazonaws.com`) — AWS CLI installer (tags resolved via GitHub)
+  - **Helm** (`get.helm.sh`) — Helm binary download
+  - **OpenShift mirrors** (`mirror.openshift.com`) — oc and rosa CLI binaries (ROSA version also uses GitHub)
 - Targets are **x86_64 Linux** (download URLs and archives are fixed for that architecture).
 
 ## Facts and connection
@@ -30,7 +35,7 @@ See [`defaults/main.yml`](defaults/main.yml) (component list) and [`meta/argumen
 
 | Variable | Description |
 | --- | --- |
-| `install_cloud_clis_components` | Subset of CLIs to install or update: `aws`, `oc`, `rosa`, `tekton`, `kube_linter`, `kustomize`, `stern`, `helm`. |
+| `install_cloud_clis_components` | Subset of CLIs to install or update: `aws`, `oc`, `ocm`, `rosa`, `tekton`, `kube_linter`, `kustomize`, `stern`, `helm`, `gws`. |
 | `install_cloud_clis_bin_dir` | Directory for symlinks/binaries. If omitted, set after **`setup`** to `{{ ansible_facts['user_dir'] }}/.local/bin`. |
 | `install_cloud_clis_aws_install_root` | AWS CLI `-i` install root. If omitted, set when AWS tasks run to `{{ ansible_facts['user_dir'] }}/.local/aws-cli`. |
 | `install_cloud_clis_manage_bashrc_completion` | When `true` (default), maintain a single Ansible `blockinfile` region in `~/.bashrc` for bash completion of selected CLIs. Set `false` to skip `.bashrc` edits entirely. |

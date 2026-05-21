@@ -1,0 +1,117 @@
+---
+- name: gws_cli | Retrieve Google Workspace CLI releases from GitHub
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/googleworkspace/cli/releases?per_page=100
+  register: __install_cloud_clis_gws_cli_versions
+
+- name: gws_cli | List GA releases with semver tag names
+  ansible.builtin.set_fact:
+    __install_cloud_clis_gws_ga_releases: >-
+      {{ __install_cloud_clis_gws_cli_versions.json
+         | selectattr('prerelease', 'equalto', false)
+         | selectattr('draft', 'equalto', false)
+         | selectattr('tag_name', 'match', '^v([0-9.]+)$')
+         | list }}
+
+- name: gws_cli | Determine highest semver among GA releases
+  ansible.builtin.set_fact:
+    __install_cloud_clis_gws_highest_semver: >-
+      {{ (__install_cloud_clis_gws_ga_releases
+         | map(attribute='tag_name')
+         | map('regex_replace', '^v', '')
+         | list
+         | community.general.version_sort
+         | last) }}
+
+- name: gws_cli | Determine latest Google Workspace CLI GA release details
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_gws_cli_ver_details: >-
+      {{ __install_cloud_clis_gws_ga_releases
+         | selectattr('tag_name', 'equalto', 'v' ~ __install_cloud_clis_gws_highest_semver)
+         | first }}
+
+- name: gws_cli | Assert a matching GA Google Workspace CLI release was resolved
+  ansible.builtin.assert:
+    that:
+      - __install_cloud_clis_latest_gws_cli_ver_details is defined
+      - __install_cloud_clis_latest_gws_cli_ver_details['tag_name'] is defined
+    fail_msg: >-
+      Could not resolve a GA Google Workspace CLI release for the highest semver (check API response and tag format).
+    quiet: true
+
+- name: gws_cli | Determine latest Google Workspace CLI version
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_gws_cli_ver: >-
+      {{ __install_cloud_clis_latest_gws_cli_ver_details['tag_name'] |
+         regex_replace('^v(?P<version>[0-9.]+)$', '\g<version>')
+      }}
+
+- name: gws_cli | Determine latest Google Workspace CLI download URL
+  ansible.builtin.set_fact:
+    __install_cloud_clis_latest_gws_cli_url: >-
+      {{ __install_cloud_clis_latest_gws_cli_ver_details['assets'] |
+         selectattr('name', 'equalto', 'google-workspace-cli-x86_64-unknown-linux-gnu.tar.gz') |
+         map(attribute='browser_download_url') |
+         first
+      }}
+
+- name: gws_cli | Check if gws binary installed
+  ansible.builtin.stat:
+    path: "{{ install_cloud_clis_bin_dir }}/gws"
+  register: __install_cloud_clis_gws_cli_installed
+
+- name: gws_cli | Check Google Workspace CLI versions (Block)
+  when: __install_cloud_clis_gws_cli_installed.stat.exists
+  block:
+    - name: gws_cli | Retrieve installed Google Workspace CLI version
+      ansible.builtin.command:
+        cmd: gws --version
+      register: __install_cloud_clis_gws_ver_installed_result
+      changed_when: false
+
+    - name: gws_cli | Determine installed Google Workspace CLI version
+      ansible.builtin.set_fact:
+        __install_cloud_clis_installed_gws_cli_ver: >-
+          {{ __install_cloud_clis_gws_ver_installed_result.stdout |
+             regex_replace('(?s)^gws (?P<version>[0-9.]+).*$', '\g<version>')
+          }}
+
+- name: gws_cli | Display Google Workspace CLI version info
+  ansible.builtin.debug:
+    msg: |
+      [
+        "Installed Version: {{ __install_cloud_clis_installed_gws_cli_ver | default('NOT INSTALLED') }}",
+        "Latest Version:    {{ __install_cloud_clis_latest_gws_cli_ver }}",
+        "URL for latest version: {{ __install_cloud_clis_latest_gws_cli_url }}"
+      ]
+    verbosity: 1
+
+- name: gws_cli | Update Google Workspace CLI executable (Block)
+  when: >-
+    (not __install_cloud_clis_gws_cli_installed.stat.exists)
+    or (
+      __install_cloud_clis_installed_gws_cli_ver is defined
+      and __install_cloud_clis_installed_gws_cli_ver is version(__install_cloud_clis_latest_gws_cli_ver, '<')
+    )
+  block:
+    - name: gws_cli | Update Google Workspace CLI executable
+      ansible.builtin.unarchive:
+        src: "{{ __install_cloud_clis_latest_gws_cli_url }}"
+        dest: "{{ install_cloud_clis_bin_dir }}"
+        remote_src: true
+        include:
+          - "./gws"
+
+    - name: gws_cli | Add updated message
+      when: >-
+        __install_cloud_clis_installed_gws_cli_ver is defined
+        and __install_cloud_clis_installed_gws_cli_ver is version(__install_cloud_clis_latest_gws_cli_ver, '<')
+      ansible.builtin.set_fact:
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Updated gws from " + __install_cloud_clis_installed_gws_cli_ver + " to " + __install_cloud_clis_latest_gws_cli_ver] }}
+
+    - name: gws_cli | Add installed message
+      when: not __install_cloud_clis_gws_cli_installed.stat.exists
+      ansible.builtin.set_fact:
+        install_cloud_clis_update_messages: >
+          {{ install_cloud_clis_update_messages + ["Installed gws"] }}

@@ -63,6 +63,11 @@
       ansible.builtin.include_tasks:
         file: helm.yml
 
+    - name: Install Google Workspace CLI
+      when: "'gws' in install_cloud_clis_components"
+      ansible.builtin.include_tasks:
+        file: gws_cli.yml
+
   always:
     - name: Refresh .bashrc completion block
       when: install_cloud_clis_manage_bashrc_completion | bool
