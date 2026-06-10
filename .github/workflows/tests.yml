@@ -198,60 +198,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   unit-source:
-    name: "py${{ matrix.python-version }} / ${{ matrix.ansible-version }}"
+    needs: unit-galaxy-matrix
+    name: "source / ${{ matrix.entry.name }}"
     runs-on: ubuntu-latest
     env:
       PY_COLORS: "1"
-    continue-on-error: ${{ matrix.ansible-version == 'devel' }}
+    continue-on-error: >-
+      ${{ contains(matrix.entry.name, 'devel')
+      || contains(matrix.entry.name, 'milestone') }}
     strategy:
       fail-fast: false
       matrix:
-        ansible-version:
-          - stable-2.16
-          - stable-2.17
-          - stable-2.18
-          - stable-2.19
-          - stable-2.20
-          - devel
-        python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-          - "3.13"
-          - "3.14"
-        exclude:
-          - ansible-version: stable-2.16
-            python-version: "3.12"
-          - ansible-version: stable-2.16
-            python-version: "3.13"
-          - ansible-version: stable-2.16
-            python-version: "3.14"
-          - ansible-version: stable-2.17
-            python-version: "3.13"
-          - ansible-version: stable-2.17
-            python-version: "3.14"
-          - ansible-version: stable-2.18
-            python-version: "3.10"
-          - ansible-version: stable-2.18
-            python-version: "3.14"
-          - ansible-version: stable-2.19
-            python-version: "3.10"
-          - ansible-version: stable-2.19
-            python-version: "3.14"
-          - ansible-version: stable-2.20
-            python-version: "3.10"
-          - ansible-version: stable-2.20
-            python-version: "3.11"
-          - ansible-version: stable-2.20
-            python-version: "3.14"
-          - ansible-version: devel
-            python-version: "3.10"
-          - ansible-version: devel
-            python-version: "3.11"
-          - ansible-version: devel
-            python-version: "3.12"
-          - ansible-version: devel
-            python-version: "3.14"
+        entry: ${{ fromJson(needs.unit-galaxy-matrix.outputs.envlist) }}
     steps:
       - name: Checkout collection
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
@@ -259,21 +217,31 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: "0"
 
+      - name: Determine ansible-core ref
+        id: vars
+        run: |
+          entry_name="${{ matrix.entry.name }}"
+          ansible_ver="${entry_name##*-py[0-9].[0-9]*-}"
+          if [[ "$ansible_ver" =~ ^[0-9] ]]; then
+            ansible_ver="stable-$ansible_ver"
+          fi
+          echo "ansible-version=$ansible_ver" >> "$GITHUB_OUTPUT"
+
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
         with:
-          python-version: "${{ matrix.python-version }}"
+          python-version: "${{ matrix.entry.python }}"
 
       - name: Install build dependencies
-        if: matrix.python-version >= '3.12'
+        if: matrix.entry.python >= '3.12'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libssh-dev
 
-      - name: Install ansible-core (${{ matrix.ansible-version }})
+      - name: Install ansible-core (${{ steps.vars.outputs.ansible-version }})
         run: >-
           pip install
-          https://github.com/ansible/ansible/archive/${{ matrix.ansible-version }}.tar.gz
+          https://github.com/ansible/ansible/archive/${{ steps.vars.outputs.ansible-version }}.tar.gz
           --disable-pip-version-check
 
       - name: Install collection dependencies
