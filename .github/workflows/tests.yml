@@ -17,40 +17,278 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   changelog:
-    uses: ansible/ansible-content-actions/.github/workflows/changelog.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request'
+      && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: "0"
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Validate changelog
+        run: >-
+          python .github/scripts/validate_changelog.py
+          --ref "${{ github.event.pull_request.base.ref }}"
+
   build-import:
-    uses: ansible/ansible-content-actions/.github/workflows/build_import.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
+    runs-on: ubuntu-latest
+    env:
+      GALAXY_IMPORTER_CONFIG: /tmp/galaxy-importer.cfg
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+
+      - name: Install dependencies
+        run: pip install ansible-core galaxy-importer
+
+      - name: Configure galaxy-importer
+        run: |
+          cat > /tmp/galaxy-importer.cfg << EOF
+          [galaxy-importer]
+          CHECK_REQUIRED_TAGS = True
+          EOF
+
+      - name: Build and import collection
+        run: python -m galaxy_importer.main --git-clone-path . --output-path /tmp
+
   ansible-lint:
-    uses: ansible/ansible-content-actions/.github/workflows/ansible_lint.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install ansible-lint
+        run: pip install ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
+
+  sanity-matrix:
+    name: "Matrix Sanity"
+    runs-on: ubuntu-latest
+    outputs:
+      envlist: ${{ steps.generate.outputs.envlist }}
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install tox-ansible
+        run: pip install tox-ansible
+
+      - name: Generate matrix
+        id: generate
+        run: >-
+          python -m tox --ansible --gh-matrix --matrix-scope sanity
+          --conf tox-ansible.ini
+
   sanity:
-    uses: ansible/ansible-content-actions/.github/workflows/sanity.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
+    needs: sanity-matrix
+    name: "${{ matrix.entry.name }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJson(needs.sanity-matrix.outputs.envlist) }}
+    continue-on-error: >-
+      ${{ contains(matrix.entry.name, 'devel')
+      || contains(matrix.entry.name, 'milestone') }}
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: "0"
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "${{ matrix.entry.python }}"
+
+      - name: Install tox-ansible
+        run: pip install tox-ansible
+
+      - name: Run sanity tests
+        run: >-
+          python -m tox --ansible -e "${{ matrix.entry.name }}"
+          --conf tox-ansible.ini
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  unit-galaxy-matrix:
+    name: "Matrix Unit"
+    runs-on: ubuntu-latest
+    outputs:
+      envlist: ${{ steps.generate.outputs.envlist }}
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "3.14"
+
+      - name: Install tox-ansible
+        run: pip install tox-ansible
+
+      - name: Generate matrix
+        id: generate
+        run: >-
+          python -m tox --ansible --gh-matrix --matrix-scope unit
+          --conf tox-ansible.ini
+
   unit-galaxy:
-    uses: ansible/ansible-content-actions/.github/workflows/unit.yaml@05894f1a7922836072b5a12e80f9c2ed5f489567
+    needs: unit-galaxy-matrix
+    name: "${{ matrix.entry.name }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJson(needs.unit-galaxy-matrix.outputs.envlist) }}
+    continue-on-error: >-
+      ${{ contains(matrix.entry.name, 'devel')
+      || contains(matrix.entry.name, 'milestone') }}
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: "0"
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "${{ matrix.entry.python }}"
+
+      - name: Install tox-ansible
+        run: pip install tox-ansible
+
+      - name: Install build dependencies
+        if: matrix.entry.python >= '3.12'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libssh-dev
+
+      - name: Run unit tests
+        run: >-
+          python -m tox --ansible -e "${{ matrix.entry.name }}"
+          --conf tox-ansible.ini
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   unit-source:
-    uses: ansible-network/github_actions/.github/workflows/unit_source.yml@446d4586bcde8bf6e1a9c085983bf172b59bd7b2
-    with:
-      collection_pre_install: >-
-        git+https://github.com/ansible-collections/ansible.utils.git
+    needs: unit-galaxy-matrix
+    name: "source / ${{ matrix.entry.name }}"
+    runs-on: ubuntu-latest
+    env:
+      PY_COLORS: "1"
+    continue-on-error: >-
+      ${{ contains(matrix.entry.name, 'devel')
+      || contains(matrix.entry.name, 'milestone') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        entry: ${{ fromJson(needs.unit-galaxy-matrix.outputs.envlist) }}
+    steps:
+      - name: Checkout collection
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: "0"
+
+      - name: Determine ansible-core ref
+        id: vars
+        run: |
+          entry_name="${{ matrix.entry.name }}"
+          ansible_ver="${entry_name##*-py[0-9].[0-9]*-}"
+          if [[ "$ansible_ver" =~ ^[0-9] ]]; then
+            ansible_ver="stable-$ansible_ver"
+          fi
+          echo "ansible-version=$ansible_ver" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6
+        with:
+          python-version: "${{ matrix.entry.python }}"
+
+      - name: Install build dependencies
+        if: matrix.entry.python >= '3.12'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libssh-dev
+
+      - name: Install ansible-core (${{ steps.vars.outputs.ansible-version }})
+        run: >-
+          pip install
+          https://github.com/ansible/ansible/archive/${{ steps.vars.outputs.ansible-version }}.tar.gz
+          --disable-pip-version-check
+
+      - name: Install collection dependencies
+        run: >-
+          ansible-galaxy collection install --pre
+          git+https://github.com/ansible-collections/ansible.utils.git
+          -p "$HOME/.ansible/collections"
+
+      - name: Build and install collection
+        run: |
+          ansible-galaxy collection build -vvv
+          ansible-galaxy collection install ./branic-system_management-*.tar.gz \
+            --pre -p "$HOME/.ansible/collections"
+          cp galaxy.yml \
+            "$HOME/.ansible/collections/ansible_collections/branic/system_management/galaxy.yml"
+
+      - name: Install test dependencies
+        run: pip install pytest-ansible pytest-xdist
+
+      - name: Print diagnostics
+        run: |
+          ansible --version
+          python3 -m pip list
+
+      - name: Run unit tests
+        run: |
+          cd "$HOME/.ansible/collections/ansible_collections/branic/system_management"
+          python -m pytest tests/unit -vvv --showlocals \
+            --ansible-host-pattern localhost
+
   all_green:
-    # Run after every needed job finishes (success or failure), but skip when the
-    # workflow run was cancelled (e.g. superseded by concurrency) so we never "pass" on cancelled deps.
     if: ${{ always() && !cancelled() }}
     needs:
       - changelog
       - build-import
+      - ansible-lint
       - sanity
       - unit-galaxy
       - unit-source
-      - ansible-lint
     runs-on: ubuntu-latest
     steps:
       - name: Verify all required jobs succeeded
         env:
-          R_CHANGELOG: ${{ needs['changelog'].result }}
+          R_CHANGELOG: ${{ needs.changelog.result }}
           R_BUILD_IMPORT: ${{ needs['build-import'].result }}
           R_ANSIBLE_LINT: ${{ needs['ansible-lint'].result }}
-          R_SANITY: ${{ needs['sanity'].result }}
+          R_SANITY: ${{ needs.sanity.result }}
           R_UNIT_GALAXY: ${{ needs['unit-galaxy'].result }}
           R_UNIT_SOURCE: ${{ needs['unit-source'].result }}
         run: |
