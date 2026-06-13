@@ -87,7 +87,7 @@ When `install_cloud_clis_manage_bashrc_completion` is `true`, the role writes on
 
 `# BEGIN ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis` and `# END ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis`
 
-The block uses **`if command -v …; then` / `fi`** stanzas and `# shellcheck source=/dev/null` before `source <(…)` completions, matching common interactive shell style. Only CLIs listed in `install_cloud_clis_components` are included, in the same order as `install_cloud_clis_cli_installers` in [`vars/main.yml`](vars/main.yml).
+The block defines a **`_lazy_completion`** shell function and registers one-liner calls for each CLI. Completions are deferred until the user's first tab-complete for a given command, then cached under **`~/.cache/bash_completions/`**. The cache auto-invalidates when the CLI binary is newer than the cached file. AWS CLI uses a direct binary completer (`aws_completer`) and does not use the lazy-load mechanism. Only CLIs listed in `install_cloud_clis_components` are included.
 
 `blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file) and sets **`mode: 0644`** on `.bashrc` when the module updates the file. Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
 
