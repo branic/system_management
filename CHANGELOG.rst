@@ -4,6 +4,20 @@ Branic System Management Collection Release Notes
 
 .. contents:: Topics
 
+v1.3.0
+======
+
+Release Summary
+---------------
+
+Improved shell startup performance by lazy-loading and caching bash
+completions in the install_cloud_clis role.
+
+Minor Changes
+-------------
+
+- install_cloud_clis - lazy-load and cache bash completions to eliminate subprocess spawns at shell startup
+
 v1.2.0
 ======
 
