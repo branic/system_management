@@ -5,58 +5,47 @@ if command -v aws &>/dev/null; then
 fi
 
 {% endif %}
-{% if 'oc' in install_cloud_clis_components %}
-if command -v oc &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(oc completion bash)
-fi
+{% set _lazy_cli_components = ['oc', 'ocm', 'rosa', 'tekton', 'kube_linter', 'kustomize', 'stern', 'helm'] %}
+{% if _lazy_cli_components | intersect(install_cloud_clis_components) | length > 0 %}
+_lazy_completion() {
+    local cmd=$1; shift
+    local gen_args=("$@")
+    local cache="${XDG_CACHE_HOME:-$HOME/.cache}/bash_completions/${cmd}.bash"
+    eval "_complete_lazy_${cmd}() {
+        unset -f _complete_lazy_${cmd}
+        complete -r ${cmd} 2>/dev/null
+        if [[ ! -f '${cache}' || \$(command -v ${cmd}) -nt '${cache}' ]]; then
+            mkdir -p '${XDG_CACHE_HOME:-$HOME/.cache}/bash_completions'
+            \"\${gen_args[@]}\" > '${cache}'
+        fi
+        source '${cache}'
+        return 124
+    }"
+    complete -F "_complete_lazy_${cmd}" "$cmd"
+}
 
+{% if 'oc' in install_cloud_clis_components %}
+command -v oc &>/dev/null && _lazy_completion oc oc completion bash
 {% endif %}
 {% if 'ocm' in install_cloud_clis_components %}
-if command -v ocm &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(ocm completion bash)
-fi
-
+command -v ocm &>/dev/null && _lazy_completion ocm ocm completion bash
 {% endif %}
 {% if 'rosa' in install_cloud_clis_components %}
-if command -v rosa &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(rosa completion bash)
-fi
-
+command -v rosa &>/dev/null && _lazy_completion rosa rosa completion bash
 {% endif %}
 {% if 'tekton' in install_cloud_clis_components %}
-if command -v tkn &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(tkn completion bash)
-fi
-
+command -v tkn &>/dev/null && _lazy_completion tkn tkn completion bash
 {% endif %}
 {% if 'kube_linter' in install_cloud_clis_components %}
-if command -v kube-linter &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(kube-linter completion bash)
-fi
-
+command -v kube-linter &>/dev/null && _lazy_completion kube-linter kube-linter completion bash
 {% endif %}
 {% if 'kustomize' in install_cloud_clis_components %}
-if command -v kustomize &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(kustomize completion bash)
-fi
-
+command -v kustomize &>/dev/null && _lazy_completion kustomize kustomize completion bash
 {% endif %}
 {% if 'stern' in install_cloud_clis_components %}
-if command -v stern &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(stern --completion=bash)
-fi
-
+command -v stern &>/dev/null && _lazy_completion stern stern --completion=bash
 {% endif %}
 {% if 'helm' in install_cloud_clis_components %}
-if command -v helm &>/dev/null; then
-    # shellcheck source=/dev/null
-    source <(helm completion bash)
-fi
+command -v helm &>/dev/null && _lazy_completion helm helm completion bash
+{% endif %}
 {% endif %}
