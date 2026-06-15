@@ -1,3 +1,0 @@
----
-minor_changes:
-  - install_cloud_clis - lazy-load and cache bash completions to eliminate subprocess spawns at shell startup
