@@ -52,7 +52,7 @@ repos:
       - id: flake8
 
   - repo: https://github.com/ansible/ansible-lint.git
-    rev: v26.6.0
+    rev: v26.8.0
     hooks:
       - id: ansible-lint
         args:
