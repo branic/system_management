@@ -18,7 +18,7 @@ argument_specs:
         required: false
         default: true
         description:
-          - When true, maintain a marked block in the connection user's .bashrc for crc bash completion.
+          - When true, update the shared lazy-loaded bash completion section in the connection user's .bashrc for crc.
           - When false, skip .bashrc changes.
 
       openshift_local_bin_dir:

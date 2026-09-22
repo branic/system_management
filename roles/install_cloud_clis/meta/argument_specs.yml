@@ -31,8 +31,8 @@ argument_specs:
         required: false
         default: true
         description:
-          - When true, maintain a marked block in the connection user's .bashrc for bash completion of installed CLIs.
-          - When false, skip all .bashrc changes (Any existing managed block from a prior run is left in place).
+          - When true, update the shared lazy-loaded bash completion section in the connection user's .bashrc for installed CLIs.
+          - When false, skip all .bashrc changes (any existing completion lines from a prior run remain until a future enabled run).
 
       install_cloud_clis_bin_dir:
         type: str

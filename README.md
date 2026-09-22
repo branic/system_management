@@ -28,19 +28,21 @@ When you install this collection with Ansible Galaxy, declared dependencies are 
 
 ### Roles
 
-| Role                                                       | Summary                                                          |
-| ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`user_config`](roles/user_config/README.md)               | Per-user settings and environment setup.                         |
-| [`system_config`](roles/system_config/README.md)           | System settings and environment setup.                           |
-| [`install_cloud_clis`](roles/install_cloud_clis/README.md) | Cloud and Kubernetes CLIs for the connection user.               |
-| [`openshift_local`](roles/openshift_local/README.md)       | Install or upgrade OpenShift Local (`crc`) for the target user.  |
-| [`secureboot_signing`](roles/secureboot_signing/README.md) | Secure Boot kernel module signing (MOK, akmods, dkms) on Fedora. |
+| Role                                                                     | Summary                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [`user_config`](roles/user_config/README.md)                             | Per-user settings and environment setup.                                       |
+| [`system_config`](roles/system_config/README.md)                         | System settings and environment setup.                                         |
+| [`install_cloud_clis`](roles/install_cloud_clis/README.md)               | Cloud and Kubernetes CLIs for the connection user.                             |
+| [`manage_bash_completions`](roles/manage_bash_completions/README.md)     | Shared lazy-loaded bash completion section in the connection user's `.bashrc`. |
+| [`openshift_local`](roles/openshift_local/README.md)                     | Install or upgrade OpenShift Local (`crc`) for the target user.                |
+| [`secureboot_signing`](roles/secureboot_signing/README.md)               | Secure Boot kernel module signing (MOK, akmods, dkms) on Fedora.               |
 
 ### Filter plugins
 
-| Filter                                              | Summary                                                                                                   |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| [`to_gnome_clocks`](plugins/filter/gnome_clocks.py) | Build GNOME world-clock GVariant strings from location data (`branic.system_management.to_gnome_clocks`). |
+| Filter                                                                   | Summary                                                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| [`to_gnome_clocks`](plugins/filter/gnome_clocks.py)                      | Build GNOME world-clock GVariant strings from location data (`branic.system_management.to_gnome_clocks`).                      |
+| [`merge_bashrc_completions`](plugins/filter/bashrc_completions.py)       | Merge provider-scoped bash completion entries into a `.bashrc` section (`branic.system_management.merge_bashrc_completions`).  |
 
 <!--end collection content-->
 

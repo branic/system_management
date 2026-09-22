@@ -1,0 +1,61 @@
+---
+- name: Test manage_bash_completions role
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    manage_bash_completions_path: "{{ playbook_dir }}/files/fixture.bashrc"
+    manage_bash_completions_provider_cmds:
+      - aws
+      - oc
+    manage_bash_completions_entries:
+      - cmd: aws
+        type: direct
+        completer: /tmp/aws_completer
+      - cmd: oc
+        type: lazy
+        generator: [oc, completion, bash]
+  tasks:
+    - name: Copy fixture bashrc
+      ansible.builtin.copy:
+        src: fixture.bashrc
+        dest: "{{ manage_bash_completions_path }}"
+        mode: "0644"
+
+    - name: Apply manage_bash_completions role
+      ansible.builtin.include_role:
+        name: branic.system_management.manage_bash_completions
+
+    - name: Assert canonical section is present
+      ansible.builtin.assert:
+        that:
+          - lookup('file', manage_bash_completions_path) is search('# Lazy-load and cache bash completions on first use')
+          - lookup('file', manage_bash_completions_path) is search('printf -v gen_cmd')
+          - lookup('file', manage_bash_completions_path) is search('command -v oc &>/dev/null && _lazy_completion oc oc completion bash')
+          - lookup('file', manage_bash_completions_path) is search('~/.bashrc-local')
+          - lookup('file', manage_bash_completions_path) is not search('ANSIBLE MANAGED BLOCK')
+
+- name: Test manage_bash_completions role (openshift_local provider)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    manage_bash_completions_path: "{{ playbook_dir }}/files/fixture.bashrc"
+    manage_bash_completions_provider_cmds:
+      - crc
+    manage_bash_completions_entries:
+      - cmd: crc
+        type: lazy
+        generator: [crc, completion, bash]
+  tasks:
+    - name: Apply manage_bash_completions role for CRC
+      ansible.builtin.include_role:
+        name: branic.system_management.manage_bash_completions
+
+    - name: Assert CRC completion is present alongside cloud CLIs
+      ansible.builtin.assert:
+        that:
+          - lookup('file', manage_bash_completions_path) is search('command -v crc &>/dev/null && _lazy_completion crc crc completion bash')
+          - lookup('file', manage_bash_completions_path) is search('command -v oc &>/dev/null && _lazy_completion oc oc completion bash')
+          - lookup('file', manage_bash_completions_path) is search('complete -C.*aws')
+          - lookup('file', manage_bash_completions_path) is search('_lazy_completion\\(\\)')

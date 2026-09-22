@@ -96,8 +96,8 @@ ansible-playbook playbooks/openshift_local.yml -i laptop, -e target=laptop
 
 ## Bash completion
 
-When `openshift_local_manage_bashrc_completion` is `true`, the role writes a block in **`{{ ansible_facts['user_dir'] }}/.bashrc`** between markers:
+When `openshift_local_manage_bashrc_completion` is `true`, the role delegates to **`manage_bash_completions`**, which updates the shared anchored section in **`{{ ansible_facts['user_dir'] }}/.bashrc`** (the same section used by `install_cloud_clis`). CRC uses the lazy `_lazy_completion` helper:
 
-`# BEGIN ANSIBLE MANAGED BLOCK branic.system_management.openshift_local` and `# END ANSIBLE MANAGED BLOCK branic.system_management.openshift_local`
+`command -v crc &>/dev/null && _lazy_completion crc crc completion bash`
 
-The block is refreshed in an **`always`** phase so completion is updated even if an install task fails (aligned with `install_cloud_clis`).
+The refresh runs in an **`always`** phase so completion is updated even if an install task fails (aligned with `install_cloud_clis`).

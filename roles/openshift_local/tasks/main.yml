@@ -183,12 +183,10 @@
         file: install_upgrade.yml
 
   always:
-    - name: Refresh crc bash completion block in .bashrc
+    - name: Refresh bash completions
       when: openshift_local_manage_bashrc_completion | bool
-      ansible.builtin.blockinfile:
-        path: "{{ ansible_facts['user_dir'] }}/.bashrc"
-        marker: "# {mark} ANSIBLE MANAGED BLOCK branic.system_management.openshift_local"
-        block: "{{ lookup('template', 'bashrc_crc_completion.j2') }}"
-        create: true
-        backup: true
-        mode: "0644"
+      ansible.builtin.include_role:
+        name: branic.system_management.manage_bash_completions
+      vars:
+        manage_bash_completions_provider_cmds: "{{ openshift_local_bash_completion_cmds }}"
+        manage_bash_completions_entries: "{{ openshift_local_bash_completion_entries }}"

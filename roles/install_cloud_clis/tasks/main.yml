@@ -27,10 +27,29 @@
         label: "{{ install_cloud_clis_cli.label }}"
 
   always:
-    - name: Refresh .bashrc completion block
+    - name: Refresh bash completions when enabled
       when: install_cloud_clis_manage_bashrc_completion | bool
-      ansible.builtin.include_tasks:
-        file: bashrc_completion.yml
+      block:
+        - name: Build bash completion entries for selected CLIs
+          ansible.builtin.set_fact:
+            __install_cloud_clis_bash_completion_entries: >-
+              {{ install_cloud_clis_cli_installers
+                 | selectattr('component', 'in', install_cloud_clis_components)
+                 | selectattr('completion', 'defined')
+                 | map(attribute='completion')
+                 | list }}
+            __install_cloud_clis_bash_completion_cmds: >-
+              {{ install_cloud_clis_cli_installers
+                 | selectattr('completion', 'defined')
+                 | map(attribute='completion.cmd')
+                 | list }}
+
+        - name: Refresh bash completions
+          ansible.builtin.include_role:
+            name: branic.system_management.manage_bash_completions
+          vars:
+            manage_bash_completions_provider_cmds: "{{ __install_cloud_clis_bash_completion_cmds }}"
+            manage_bash_completions_entries: "{{ __install_cloud_clis_bash_completion_entries }}"
 
     - name: Display upgrade results
       ansible.builtin.debug:
