@@ -38,7 +38,7 @@ See [`defaults/main.yml`](defaults/main.yml) (component list) and [`meta/argumen
 | `install_cloud_clis_components` | Subset of CLIs to install or update: `aws`, `oc`, `ocm`, `rosa`, `tekton`, `kube_linter`, `kustomize`, `stern`, `helm`, `gws`. |
 | `install_cloud_clis_bin_dir` | Directory for symlinks/binaries. If omitted, set after **`setup`** to `{{ ansible_facts['user_dir'] }}/.local/bin`. |
 | `install_cloud_clis_aws_install_root` | AWS CLI `-i` install root. If omitted, set when AWS tasks run to `{{ ansible_facts['user_dir'] }}/.local/aws-cli`. |
-| `install_cloud_clis_manage_bashrc_completion` | When `true` (default), maintain a single Ansible `blockinfile` region in `~/.bashrc` for bash completion of selected CLIs. Set `false` to skip `.bashrc` edits entirely. |
+| `install_cloud_clis_manage_bashrc_completion` | When `true` (default), update the shared lazy-loaded bash completion section in `~/.bashrc` for selected CLIs. Set `false` to skip `.bashrc` edits entirely. |
 | `install_cloud_clis_update_messages` | List of human-readable update messages accumulated during the run; usually leave default `[]`. |
 
 ## Dependencies
@@ -83,15 +83,17 @@ Limit which CLIs are managed:
 
 ## Bash completion and `.bashrc`
 
-When `install_cloud_clis_manage_bashrc_completion` is `true`, the role writes one contiguous block in **`{{ ansible_facts['user_dir'] }}/.bashrc`** between markers:
+When `install_cloud_clis_manage_bashrc_completion` is `true`, the role delegates to **`manage_bash_completions`**, which maintains one anchored section in **`{{ ansible_facts['user_dir'] }}/.bashrc`** beginning with:
 
-`# BEGIN ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis` and `# END ANSIBLE MANAGED BLOCK branic.system_management.install_cloud_clis`
+`# Lazy-load and cache bash completions on first use`
 
-The block defines a **`_lazy_completion`** shell function and registers one-liner calls for each CLI. Completions are deferred until the user's first tab-complete for a given command, then cached under **`~/.cache/bash_completions/`**. The cache auto-invalidates when the CLI binary is newer than the cached file. AWS CLI uses a direct binary completer (`aws_completer`) and does not use the lazy-load mechanism. Only CLIs listed in `install_cloud_clis_components` are included.
+The section defines a **`_lazy_completion`** shell function and registers completion calls for each selected CLI. Completion metadata lives alongside installer definitions in [`vars/main.yml`](vars/main.yml) under each installer's optional `completion:` key. Adding a new CLI with completion support only requires updating that installer entry.
 
-`blockinfile` runs with **`backup: true`** (timestamped `.bashrc` backup beside the file) and sets **`mode: 0644`** on `.bashrc` when the module updates the file. Add your own completions **outside** that marked region (for example in `~/.bashrc-local` or after the block) so the role does not manage them.
+Completions are deferred until the user's first tab-complete for a given command, then cached under **`~/.cache/bash_completions/`**. The cache auto-invalidates when the CLI binary is newer than the cached file. AWS CLI uses a direct binary completer (`aws_completer`) and does not use the lazy-load mechanism. Only CLIs listed in `install_cloud_clis_components` are included.
 
-If you set **`install_cloud_clis_manage_bashrc_completion: false`**, the role does not read or change `.bashrc`. Any block from an earlier run remains until you remove it manually.
+The shared section preserves completion lines owned by other roles (for example `crc` from `openshift_local`). Legacy Ansible `blockinfile` markers and obsolete one-line `source <(...)` registrations are removed during migration.
+
+If you set **`install_cloud_clis_manage_bashrc_completion: false`**, the role does not read or change `.bashrc`. Existing completion lines for this role's CLIs remain until a future enabled run prunes or updates them.
 
 ## Idempotency and check mode
 

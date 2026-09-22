@@ -8,30 +8,66 @@ install_cloud_clis_cli_installers:
   - component: aws
     label: AWS CLI
     tasks_file: aws_cli.yml
+    completion:
+      cmd: aws
+      type: direct
+      completer: "{{ install_cloud_clis_bin_dir }}/aws_completer"
   - component: oc
     label: OC CLI
     tasks_file: oc_cli.yml
+    completion:
+      cmd: oc
+      type: lazy
+      generator: [oc, completion, bash]
   - component: ocm
     label: OCM CLI
     tasks_file: ocm_cli.yml
+    completion:
+      cmd: ocm
+      type: lazy
+      generator: [ocm, completion, bash]
   - component: rosa
     label: ROSA CLI
     tasks_file: rosa_cli.yml
+    completion:
+      cmd: rosa
+      type: lazy
+      generator: [rosa, completion, bash]
   - component: tekton
     label: Tekton CLI
     tasks_file: tekton_cli.yml
+    completion:
+      cmd: tkn
+      type: lazy
+      generator: [tkn, completion, bash]
   - component: kube_linter
     label: kube-linter
     tasks_file: kube-linter.yml
+    completion:
+      cmd: kube-linter
+      type: lazy
+      generator: [kube-linter, completion, bash]
   - component: kustomize
     label: kustomize
     tasks_file: kustomize.yml
+    completion:
+      cmd: kustomize
+      type: lazy
+      generator: [kustomize, completion, bash]
   - component: stern
     label: stern
     tasks_file: stern.yml
+    completion:
+      cmd: stern
+      type: lazy
+      generator: [stern, --completion=bash]
   - component: helm
     label: Helm
     tasks_file: helm.yml
+    completion:
+      cmd: helm
+      type: lazy
+      generator: [helm, completion, bash]
   - component: gws
     label: Google Workspace CLI
     tasks_file: gws_cli.yml

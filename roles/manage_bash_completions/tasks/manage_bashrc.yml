@@ -1,0 +1,55 @@
+---
+- name: Assert required manage_bash_completions variables
+  ansible.builtin.assert:
+    that:
+      - manage_bash_completions_provider_cmds is defined
+      - manage_bash_completions_entries is defined
+    quiet: true
+
+- name: Gather minimal facts when user_dir is missing
+  when: ansible_facts['user_dir'] is not defined
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - min
+
+- name: Set effective bashrc path
+  ansible.builtin.set_fact:
+    __manage_bash_completions_path: >-
+      {{ manage_bash_completions_path
+         | default(ansible_facts['user_dir'] ~ '/.bashrc', true) }}
+
+- name: Stat bashrc
+  ansible.builtin.stat:
+    path: "{{ __manage_bash_completions_path }}"
+  register: __manage_bash_completions_stat
+
+- name: Slurp bashrc when present
+  when: __manage_bash_completions_stat.stat.exists
+  ansible.builtin.slurp:
+    path: "{{ __manage_bash_completions_path }}"
+  register: __manage_bash_completions_slurp
+
+- name: Initialize bashrc content
+  ansible.builtin.set_fact:
+    __manage_bash_completions_content: >-
+      {{ (__manage_bash_completions_slurp.content | b64decode)
+         if __manage_bash_completions_stat.stat.exists
+         else '' }}
+
+- name: Merge bash completion section
+  ansible.builtin.set_fact:
+    __manage_bash_completions_result: >-
+      {{ __manage_bash_completions_content
+         | branic.system_management.merge_bashrc_completions(
+             provider_cmds=manage_bash_completions_provider_cmds,
+             entries=manage_bash_completions_entries,
+           ) }}
+
+- name: Write merged bashrc # noqa: no-handler
+  when: __manage_bash_completions_result.changed
+  ansible.builtin.copy:
+    dest: "{{ __manage_bash_completions_path }}"
+    content: "{{ __manage_bash_completions_result.content }}"
+    mode: "0644"
+    backup: true

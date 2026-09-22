@@ -1,0 +1,64 @@
+---
+argument_specs:
+  main:
+    short_description: Maintain a shared lazy-loaded bash completion section in .bashrc
+    description:
+      - Generic executor role for provider-scoped bash completion management.
+      - Consumer roles pass completion metadata; this role merges it into a single anchored section.
+    author:
+      - Brant Evans
+    version_added: "1.4.0"
+    options:
+      manage_bash_completions_enabled:
+        type: bool
+        required: false
+        default: true
+        description:
+          - When false, skip all .bashrc changes.
+
+      manage_bash_completions_provider_cmds:
+        type: list
+        elements: str
+        required: true
+        description:
+          - All command names this provider may manage. Existing lines for these commands are replaced on each run.
+
+      manage_bash_completions_entries:
+        type: list
+        elements: dict
+        required: true
+        description:
+          - Structured completion entries to register for this provider on the current run.
+        options:
+          cmd:
+            type: str
+            required: true
+            description:
+              - Command name checked with command -v and registered for completion.
+          type:
+            type: str
+            required: true
+            choices:
+              - direct
+              - lazy
+            description:
+              - Completion registration style. Use direct for a binary completer (for example aws_completer).
+              - Use lazy for generators that produce completion scripts on first use.
+          completer:
+            type: str
+            required: false
+            description:
+              - Absolute path to the completer binary. Required when type is direct.
+          generator:
+            type: list
+            elements: str
+            required: false
+            description:
+              - Arguments passed to _lazy_completion after the command name (for example [oc, completion, bash]).
+              - Required when type is lazy. The rendered line repeats cmd as the first generator argument.
+
+      manage_bash_completions_path:
+        type: str
+        required: false
+        description:
+          - Path to the bashrc file to manage. Defaults to ansible_facts user_dir plus /.bashrc.

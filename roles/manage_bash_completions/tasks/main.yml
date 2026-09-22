@@ -1,0 +1,5 @@
+---
+- name: Manage bash completion section
+  when: manage_bash_completions_enabled | bool
+  ansible.builtin.include_tasks:
+    file: manage_bashrc.yml

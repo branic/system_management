@@ -1,4 +1,14 @@
 ---
+# Internal: bash completion metadata for openshift_local (passed to manage_bash_completions).
+
+openshift_local_bash_completion_cmds:
+  - crc
+
+openshift_local_bash_completion_entries:
+  - cmd: crc
+    type: lazy
+    generator: [crc, completion, bash]
+
 # Internal: GitHub API base for crc-org/crc (releases list and release-by-tag).
 __openshift_local_crc_github_api_base: https://api.github.com/repos/crc-org/crc
 
