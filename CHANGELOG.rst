@@ -4,6 +4,29 @@ Branic System Management Collection Release Notes
 
 .. contents:: Topics
 
+v1.4.0
+======
+
+Release Summary
+---------------
+
+Adds a dedicated manage_bash_completions role and merge_bashrc_completions
+filter plugin for shared, lazy-loaded bash completion management in
+``~/.bashrc``, replacing per-role template handling.
+
+Minor Changes
+-------------
+
+- Add ``manage_bash_completions`` role to maintain a shared lazy-loaded bash completion section in ``~/.bashrc``, replacing per-role template management.
+- Add ``merge_bashrc_completions`` filter plugin for idempotent merging of provider-scoped bash completion entries with legacy format migration.
+- install_cloud_clis and openshift_local roles now delegate bash completion management to the shared ``manage_bash_completions`` role.
+
+Bugfixes
+--------
+
+- merge_bashrc_completions filter plugin -- fix legacy one-liner regex patterns that contained a stray ``>`` after the closing parenthesis, preventing removal of old ``source <(cmd completion bash)`` lines during migration.
+- openshift_local -- update CRC binary download URL to use the current Red Hat content-gateway path, fixing HTTP 404 errors when installing or upgrading CRC.
+
 v1.3.0
 ======
 
