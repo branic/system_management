@@ -2,31 +2,58 @@
 
 **Topics**
 
-- <a href="#v1-3-0">v1\.3\.0</a>
+- <a href="#v1-4-0">v1\.4\.0</a>
     - <a href="#release-summary">Release Summary</a>
     - <a href="#minor-changes">Minor Changes</a>
-- <a href="#v1-2-0">v1\.2\.0</a>
+    - <a href="#bugfixes">Bugfixes</a>
+- <a href="#v1-3-0">v1\.3\.0</a>
     - <a href="#release-summary-1">Release Summary</a>
     - <a href="#minor-changes-1">Minor Changes</a>
-    - <a href="#bugfixes">Bugfixes</a>
-- <a href="#v1-1-0">v1\.1\.0</a>
+- <a href="#v1-2-0">v1\.2\.0</a>
     - <a href="#release-summary-2">Release Summary</a>
     - <a href="#minor-changes-2">Minor Changes</a>
-- <a href="#v1-0-0">v1\.0\.0</a>
+    - <a href="#bugfixes-1">Bugfixes</a>
+- <a href="#v1-1-0">v1\.1\.0</a>
     - <a href="#release-summary-3">Release Summary</a>
     - <a href="#minor-changes-3">Minor Changes</a>
-    - <a href="#bugfixes-1">Bugfixes</a>
+- <a href="#v1-0-0">v1\.0\.0</a>
+    - <a href="#release-summary-4">Release Summary</a>
+    - <a href="#minor-changes-4">Minor Changes</a>
+    - <a href="#bugfixes-2">Bugfixes</a>
+
+<a id="v1-4-0"></a>
+## v1\.4\.0
+
+<a id="release-summary"></a>
+### Release Summary
+
+Adds a dedicated manage\_bash\_completions role and merge\_bashrc\_completions
+filter plugin for shared\, lazy\-loaded bash completion management in
+<code>\~/\.bashrc</code>\, replacing per\-role template handling\.
+
+<a id="minor-changes"></a>
+### Minor Changes
+
+* Add <code>manage\_bash\_completions</code> role to maintain a shared lazy\-loaded bash completion section in <code>\~/\.bashrc</code>\, replacing per\-role template management\.
+* Add <code>merge\_bashrc\_completions</code> filter plugin for idempotent merging of provider\-scoped bash completion entries with legacy format migration\.
+* install\_cloud\_clis and openshift\_local roles now delegate bash completion management to the shared <code>manage\_bash\_completions</code> role\.
+
+<a id="bugfixes"></a>
+### Bugfixes
+
+* merge\_bashrc\_completions filter plugin \-\- fix legacy one\-liner regex patterns that contained a stray <code>\></code> after the closing parenthesis\, preventing removal of old <code>source \<\(cmd completion bash\)</code> lines during migration\.
+* openshift\_local \-\- update CRC binary download URL to use the current Red Hat content\-gateway path\, fixing HTTP 404 errors when installing or upgrading CRC\.
 
 <a id="v1-3-0"></a>
 ## v1\.3\.0
 
-<a id="release-summary"></a>
+<a id="release-summary-1"></a>
 ### Release Summary
 
 Improved shell startup performance by lazy\-loading and caching bash
 completions in the install\_cloud\_clis role\.
 
-<a id="minor-changes"></a>
+<a id="minor-changes-1"></a>
 ### Minor Changes
 
 * install\_cloud\_clis \- lazy\-load and cache bash completions to eliminate subprocess spawns at shell startup
@@ -34,13 +61,13 @@ completions in the install\_cloud\_clis role\.
 <a id="v1-2-0"></a>
 ## v1\.2\.0
 
-<a id="release-summary-1"></a>
+<a id="release-summary-2"></a>
 ### Release Summary
 
 Extends install\_cloud\_clis with OCM and Google Workspace CLIs\, hardens ROSA
 installs against mirror lag\, and isolates per\-CLI failures\.
 
-<a id="minor-changes-1"></a>
+<a id="minor-changes-2"></a>
 ### Minor Changes
 
 * install\_cloud\_clis role \- add Google Workspace CLI \(gws\) installation from GitHub releases
@@ -48,7 +75,7 @@ installs against mirror lag\, and isolates per\-CLI failures\.
 * install\_cloud\_clis role \- isolate each CLI install in block/rescue so one component failure does not block remaining installs
 * install\_cloud\_clis role \- loop CLI installs from install\_cloud\_clis\_cli\_installers to reduce duplicated task definitions in main\.yml
 
-<a id="bugfixes"></a>
+<a id="bugfixes-1"></a>
 ### Bugfixes
 
 * install\_cloud\_clis role \- resolve ROSA CLI install version from mirror\.openshift\.com availability so a GitHub release ahead of the mirror does not fail the play
@@ -56,12 +83,12 @@ installs against mirror lag\, and isolates per\-CLI failures\.
 <a id="v1-1-0"></a>
 ## v1\.1\.0
 
-<a id="release-summary-2"></a>
+<a id="release-summary-3"></a>
 ### Release Summary
 
 Feature release adding systemd unit management\, sysctl configuration\, and package replacement capabilities\.
 
-<a id="minor-changes-2"></a>
+<a id="minor-changes-3"></a>
 ### Minor Changes
 
 * Add <code>ansible\.posix</code> collection dependency\.
@@ -74,12 +101,12 @@ Feature release adding systemd unit management\, sysctl configuration\, and pack
 <a id="v1-0-0"></a>
 ## v1\.0\.0
 
-<a id="release-summary-3"></a>
+<a id="release-summary-4"></a>
 ### Release Summary
 
 Initial release of the collection
 
-<a id="minor-changes-3"></a>
+<a id="minor-changes-4"></a>
 ### Minor Changes
 
 * Add <code>openshift\_local</code> role to install or upgrade OpenShift Local \(CRC\) with optional host checks\, configurable <code>crc</code> settings\, and <code>\~/\.bashrc</code> completion\.
@@ -100,7 +127,7 @@ Initial release of the collection
 * user\_config role \- add optional uv installation via the standalone installer
 * user\_config role \- replace hard\-coded dconf tasks with the <code>user\_config\_dconf\_settings</code> variable
 
-<a id="bugfixes-1"></a>
+<a id="bugfixes-2"></a>
 ### Bugfixes
 
 * fix ansible\_user\_dir deprecation warnings

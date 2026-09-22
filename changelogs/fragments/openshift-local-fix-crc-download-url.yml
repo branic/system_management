@@ -1,6 +1,0 @@
----
-bugfixes:
-  - >-
-    openshift_local -- update CRC binary download URL to use the current
-    Red Hat content-gateway path, fixing HTTP 404 errors when installing
-    or upgrading CRC.
