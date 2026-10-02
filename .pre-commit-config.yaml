@@ -35,7 +35,7 @@ repos:
           - prettier-plugin-toml
 
   - repo: https://github.com/PyCQA/isort
-    rev: 9.0.1
+    rev: 9.0.2
     hooks:
       - id: isort
         name: Sort import statements using isort
@@ -47,12 +47,12 @@ repos:
       - id: black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: 7.4.1
     hooks:
       - id: flake8
 
   - repo: https://github.com/ansible/ansible-lint.git
-    rev: v26.8.0
+    rev: v26.9.0
     hooks:
       - id: ansible-lint
         args:
